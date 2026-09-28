@@ -1,0 +1,6 @@
+{
+  "name": "Kabadiwala Connect",
+  "description": "Accessible e-waste management platform connecting collectors, recyclers, and administrators.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
