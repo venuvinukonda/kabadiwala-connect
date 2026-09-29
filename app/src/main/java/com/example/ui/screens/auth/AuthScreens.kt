@@ -51,69 +51,72 @@ fun RoleSelectionScreen(
             )
         }
     ) { padding ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = maxHeight)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = LocalizationManager.getString("select_role"),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = LocalizationManager.getString("select_role_desc"),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
 
-            Text(
-                text = LocalizationManager.getString("select_role"),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = LocalizationManager.getString("select_role_desc"),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.height(24.dp))
+                // 1. Collector Card
+                RoleCard(
+                    title = LocalizationManager.getString("role_collector"),
+                    subtitle = LocalizationManager.getString("role_collector_desc"),
+                    icon = Icons.Default.Recycling,
+                    containerColor = PureWhiteSurface,
+                    contentColor = DeepGreenPrimary,
+                    onClick = { onRoleSelected(UserRole.COLLECTOR) },
+                    testTag = "role_collector_card"
+                )
 
-            // 1. Collector Card
-            RoleCard(
-                title = LocalizationManager.getString("role_collector"),
-                subtitle = LocalizationManager.getString("role_collector_desc"),
-                icon = Icons.Default.Recycling,
-                containerColor = PureWhiteSurface,
-                contentColor = DeepGreenPrimary,
-                onClick = { onRoleSelected(UserRole.COLLECTOR) },
-                testTag = "role_collector_card"
-            )
+                Spacer(modifier = Modifier.height(14.dp))
 
-            Spacer(modifier = Modifier.height(12.dp))
+                // 2. Recycler Card
+                RoleCard(
+                    title = LocalizationManager.getString("role_recycler"),
+                    subtitle = LocalizationManager.getString("role_recycler_desc"),
+                    icon = Icons.Default.PrecisionManufacturing,
+                    containerColor = PureWhiteSurface,
+                    contentColor = TechBlueTertiary,
+                    onClick = { onRoleSelected(UserRole.RECYCLER) },
+                    testTag = "role_recycler_card"
+                )
 
-            // 2. Recycler Card
-            RoleCard(
-                title = LocalizationManager.getString("role_recycler"),
-                subtitle = LocalizationManager.getString("role_recycler_desc"),
-                icon = Icons.Default.PrecisionManufacturing,
-                containerColor = PureWhiteSurface,
-                contentColor = TechBlueTertiary,
-                onClick = { onRoleSelected(UserRole.RECYCLER) },
-                testTag = "role_recycler_card"
-            )
+                Spacer(modifier = Modifier.height(14.dp))
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 3. Admin Card
-            RoleCard(
-                title = LocalizationManager.getString("role_admin"),
-                subtitle = LocalizationManager.getString("role_admin_desc"),
-                icon = Icons.Default.AdminPanelSettings,
-                containerColor = PureWhiteSurface,
-                contentColor = WarmOrangeSecondary,
-                onClick = { onRoleSelected(UserRole.ADMIN) },
-                testTag = "role_admin_card"
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
+                // 3. Admin Card
+                RoleCard(
+                    title = LocalizationManager.getString("role_admin"),
+                    subtitle = LocalizationManager.getString("role_admin_desc"),
+                    icon = Icons.Default.AdminPanelSettings,
+                    containerColor = PureWhiteSurface,
+                    contentColor = WarmOrangeSecondary,
+                    onClick = { onRoleSelected(UserRole.ADMIN) },
+                    testTag = "role_admin_card"
+                )
+            }
         }
     }
 }
@@ -193,20 +196,20 @@ fun LoginScreen(
     onLanguageClick: () -> Unit
 ) {
     val currentLang by viewModel.currentLanguage.collectAsState()
-    val isSpeaking by viewModel.isSpeaking.collectAsState()
+    var activeRole by remember(role) { mutableStateOf(role) }
 
-    var identifier by remember {
+    var identifier by remember(activeRole) {
         mutableStateOf(
-            when (role) {
+            when (activeRole) {
                 UserRole.COLLECTOR -> "collector"
                 UserRole.RECYCLER -> "recycler"
                 UserRole.ADMIN -> "admin"
             }
         )
     }
-    var password by remember {
+    var password by remember(activeRole) {
         mutableStateOf(
-            when (role) {
+            when (activeRole) {
                 UserRole.ADMIN -> "admin123"
                 else -> "password123"
             }
@@ -217,7 +220,11 @@ fun LoginScreen(
     var isLoading by remember { mutableStateOf(false) }
     var showForgotPasswordDialog by remember { mutableStateOf(false) }
 
-    val roleLabel = when (role) {
+    LaunchedEffect(Unit) {
+        viewModel.stopAudio()
+    }
+
+    val roleLabel = when (activeRole) {
         UserRole.COLLECTOR -> LocalizationManager.getString("role_collector")
         UserRole.RECYCLER -> LocalizationManager.getString("role_recycler")
         UserRole.ADMIN -> LocalizationManager.getString("role_admin")
@@ -233,181 +240,249 @@ fun LoginScreen(
             )
         }
     ) { padding ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(72.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = when (role) {
-                            UserRole.COLLECTOR -> Icons.Default.Recycling
-                            UserRole.RECYCLER -> Icons.Default.PrecisionManufacturing
-                            UserRole.ADMIN -> Icons.Default.AdminPanelSettings
-                        },
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = LocalizationManager.getWelcomeGreeting(roleLabel),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = LocalizationManager.getString("username_or_phone"),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            ListenButton(
-                textToSpeak = "${LocalizationManager.getString("login")} - $roleLabel. ${LocalizationManager.getString("username_or_phone")}, ${LocalizationManager.getString("password")}.",
-                onSpeak = { viewModel.speak(it) },
-                onStop = { viewModel.stopAudio() },
-                isSpeaking = isSpeaking,
-                label = LocalizationManager.getString("listen")
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            OutlinedTextField(
-                value = identifier,
-                onValueChange = { identifier = it },
-                label = { Text(LocalizationManager.getString("username_or_phone")) },
-                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                singleLine = true,
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("login_identifier_input"),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text(LocalizationManager.getString("password")) },
-                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    .heightIn(min = maxHeight)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(68.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                            imageVector = when (activeRole) {
+                                UserRole.COLLECTOR -> Icons.Default.Recycling
+                                UserRole.RECYCLER -> Icons.Default.PrecisionManufacturing
+                                UserRole.ADMIN -> Icons.Default.AdminPanelSettings
+                            },
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(38.dp)
                         )
                     }
-                },
-                visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("login_password_input"),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(
-                    onClick = { showForgotPasswordDialog = true },
-                    modifier = Modifier.testTag("forgot_password_button")
-                ) {
-                    Text(LocalizationManager.getString("forgot_password_title"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 }
-            }
 
-            if (errorMessage != null) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+
                 Text(
-                    text = errorMessage ?: "",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
+                    text = LocalizationManager.getWelcomeGreeting(roleLabel),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
                 )
-            }
+                Text(
+                    text = LocalizationManager.getString("username_or_phone"),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
-            Button(
-                onClick = {
-                    if (identifier.isBlank() || password.isBlank()) {
-                        errorMessage = LocalizationManager.getString("enter_id_password_error")
-                        return@Button
-                    }
-                    isLoading = true
-                    errorMessage = null
-                    viewModel.login(
-                        identifier = identifier,
-                        pass = password,
-                        onSuccess = {
-                            isLoading = false
-                            onLoginSuccess()
-                        },
-                        onError = { err ->
-                            isLoading = false
-                            errorMessage = err
-                        }
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .minimumInteractiveComponentSize()
-                    .testTag("login_submit_button"),
-                shape = RoundedCornerShape(14.dp),
-                enabled = !isLoading
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                } else {
-                    Text(LocalizationManager.getString("login"), fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (role != UserRole.ADMIN) {
+                // Role Selectors in the Login page
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(LocalizationManager.getString("dont_have_account"), fontSize = 14.sp)
-                }
-            }
-
-            if (showForgotPasswordDialog) {
-                ForgotPasswordDialog(
-                    initialIdentifier = identifier,
-                    onDismiss = { showForgotPasswordDialog = false },
-                    onReset = { userIdentifier, newPass ->
-                        viewModel.resetPassword(userIdentifier, newPass) { success, msg ->
-                            if (success) {
-                                password = newPass
-                                identifier = userIdentifier
-                                showForgotPasswordDialog = false
-                                viewModel.showMessage(msg)
-                            } else {
-                                viewModel.showMessage(msg)
+                    listOf(UserRole.COLLECTOR, UserRole.RECYCLER, UserRole.ADMIN).forEach { r ->
+                        val isSelected = activeRole == r
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    activeRole = r
+                                    errorMessage = null
+                                }
+                                .testTag("login_role_${r.name.lowercase()}_tab"),
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = when (r) {
+                                        UserRole.COLLECTOR -> Icons.Default.Recycling
+                                        UserRole.RECYCLER -> Icons.Default.PrecisionManufacturing
+                                        UserRole.ADMIN -> Icons.Default.AdminPanelSettings
+                                    },
+                                    contentDescription = null,
+                                    tint = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = when (r) {
+                                        UserRole.COLLECTOR -> LocalizationManager.getString("role_collector").split(" ").firstOrNull() ?: "Collector"
+                                        UserRole.RECYCLER -> LocalizationManager.getString("role_recycler").split(" ").firstOrNull() ?: "Recycler"
+                                        UserRole.ADMIN -> LocalizationManager.getString("role_admin").split(" ").firstOrNull() ?: "Admin"
+                                    },
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    maxLines = 1,
+                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+                                )
                             }
                         }
                     }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                OutlinedTextField(
+                    value = identifier,
+                    onValueChange = { identifier = it },
+                    label = { Text(LocalizationManager.getString("username_or_phone")) },
+                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("login_identifier_input"),
+                    shape = RoundedCornerShape(12.dp)
                 )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(LocalizationManager.getString("password")) },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                            )
+                        }
+                    },
+                    visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("login_password_input"),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = { showForgotPasswordDialog = true },
+                        modifier = Modifier.testTag("forgot_password_button")
+                    ) {
+                        Text(LocalizationManager.getString("forgot_password_title"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+
+                if (errorMessage != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Button(
+                    onClick = {
+                        if (identifier.isBlank() || password.isBlank()) {
+                            errorMessage = LocalizationManager.getString("enter_id_password_error")
+                            return@Button
+                        }
+                        isLoading = true
+                        errorMessage = null
+                        viewModel.login(
+                            identifier = identifier,
+                            pass = password,
+                            onSuccess = {
+                                isLoading = false
+                                onLoginSuccess()
+                            },
+                            onError = { err ->
+                                isLoading = false
+                                errorMessage = err
+                            }
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .minimumInteractiveComponentSize()
+                        .testTag("login_submit_button"),
+                    shape = RoundedCornerShape(14.dp),
+                    enabled = !isLoading
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    } else {
+                        Text(LocalizationManager.getString("login"), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (activeRole != UserRole.ADMIN) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = LocalizationManager.getString("dont_have_account") + " ",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        TextButton(
+                            onClick = onNavigateToRegister,
+                            modifier = Modifier.testTag("login_to_register_button")
+                        ) {
+                            Text(
+                                text = LocalizationManager.getString("register"),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+
+                if (showForgotPasswordDialog) {
+                    ForgotPasswordDialog(
+                        initialIdentifier = identifier,
+                        onDismiss = { showForgotPasswordDialog = false },
+                        onReset = { userIdentifier, newPass ->
+                            viewModel.resetPassword(userIdentifier, newPass) { success, msg ->
+                                if (success) {
+                                    password = newPass
+                                    identifier = userIdentifier
+                                    showForgotPasswordDialog = false
+                                    viewModel.showMessage(msg)
+                                } else {
+                                    viewModel.showMessage(msg)
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
     }
@@ -446,11 +521,13 @@ fun CollectorRegisterScreen(
             )
         }
     ) { padding ->
+        val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+                .verticalScrollbar(scrollState)
+                .verticalScroll(scrollState)
                 .padding(16.dp)
         ) {
             if (submitted) {
@@ -667,11 +744,13 @@ fun RecyclerRegisterScreen(
             )
         }
     ) { padding ->
+        val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+                .verticalScrollbar(scrollState)
+                .verticalScroll(scrollState)
                 .padding(16.dp)
         ) {
             if (submitted) {

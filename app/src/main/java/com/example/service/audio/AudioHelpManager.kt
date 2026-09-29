@@ -29,6 +29,11 @@ class AudioHelpManager(private val context: Context) : TextToSpeech.OnInitListen
     private val _speechRate = MutableStateFlow(1.0f)
     val speechRate: StateFlow<Float> = _speechRate.asStateFlow()
 
+    private val _voiceUnavailableMessage = MutableStateFlow<String?>(null)
+    val voiceUnavailableMessage: StateFlow<String?> = _voiceUnavailableMessage.asStateFlow()
+
+    private var pendingRetryText: String? = null
+
     init {
         try {
             tts = TextToSpeech(context.applicationContext, this)
@@ -69,14 +74,38 @@ class AudioHelpManager(private val context: Context) : TextToSpeech.OnInitListen
     }
 
     /**
-     * Dynamically binds the TTS engine to the selected language locale and native voice.
-     * Never falls back to an English voice for non-English languages (Marathi, Telugu, Hindi, etc.).
+     * Resolves target locale for all supported languages without deprecated constructors.
      */
-    fun setLocaleForLanguage(lang: AppLanguage) {
-        currentAppLanguage = lang
-        if (!isInitialized || tts == null) return
+    fun getTargetLocale(lang: AppLanguage): Locale {
+        return when (lang) {
+            AppLanguage.MARATHI -> Locale.forLanguageTag("mr-IN")
+            AppLanguage.HINDI -> Locale.forLanguageTag("hi-IN")
+            AppLanguage.TELUGU -> Locale.forLanguageTag("te-IN")
+            AppLanguage.TAMIL -> Locale.forLanguageTag("ta-IN")
+            AppLanguage.KANNADA -> Locale.forLanguageTag("kn-IN")
+            AppLanguage.MALAYALAM -> Locale.forLanguageTag("ml-IN")
+            AppLanguage.BENGALI -> Locale.forLanguageTag("bn-IN")
+            AppLanguage.GUJARATI -> Locale.forLanguageTag("gu-IN")
+            AppLanguage.PUNJABI -> Locale.forLanguageTag("pa-IN")
+            AppLanguage.ODIA -> Locale.forLanguageTag("or-IN")
+            AppLanguage.ENGLISH -> Locale.forLanguageTag("en-IN")
+        }
+    }
 
-        val targetLocale = lang.getLocale()
+    /**
+     * Dynamically binds the TTS engine to the selected language locale and native voice.
+     * Guarantees that Marathi, Hindi, Telugu, etc. voices are preserved, and informs the user
+     * if the voice package is missing instead of falling back to English.
+     */
+    fun setLocaleForLanguage(lang: AppLanguage): Boolean {
+        currentAppLanguage = lang
+        if (!isInitialized || tts == null) return false
+
+        val targetLocale = getTargetLocale(lang)
+
+        // Check if language/voice data is available
+        val check = tts?.isLanguageAvailable(targetLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+        val isTargetAvailable = check != TextToSpeech.LANG_MISSING_DATA && check != TextToSpeech.LANG_NOT_SUPPORTED
 
         // 1. Search available voices for an exact or regional match
         try {
@@ -99,39 +128,93 @@ class AudioHelpManager(private val context: Context) : TextToSpeech.OnInitListen
                 }
             }
         } catch (e: Exception) {
-            Log.w("AudioHelpManager", "Querying voices not supported on this platform: ${e.message}")
+            Log.w("AudioHelpManager", "Querying voices not supported: ${e.message}")
         }
 
-        // 2. Explicitly set language with country (e.g., mr-IN, te-IN, hi-IN)
+        // 2. Explicitly set language with country
         val result = tts?.setLanguage(targetLocale)
-        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-            // Try base language code (e.g., "mr", "te", "hi")
-            val baseResult = tts?.setLanguage(Locale(lang.code))
-            if (baseResult == TextToSpeech.LANG_MISSING_DATA || baseResult == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.w("AudioHelpManager", "TTS engine missing voice data for ${lang.displayName}. Retaining ${lang.code} locale without English fallback.")
-                // DO NOT overwrite with English. Keep targetLocale so pronunciation is not butchered by an English voice.
-            }
+        val success = result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED
+        if (!success) {
+            val baseResult = tts?.setLanguage(Locale.forLanguageTag(lang.code))
+            return baseResult != TextToSpeech.LANG_MISSING_DATA && baseResult != TextToSpeech.LANG_NOT_SUPPORTED
         }
+        return isTargetAvailable
     }
 
     fun speak(text: String, utteranceId: String = "TTS_${System.currentTimeMillis()}") {
         if (text.isBlank()) return
         stop()
+
         _currentSpokenText.value = text
-        _isSpeaking.value = true
-        _isPaused.value = false
+        _voiceUnavailableMessage.value = null
+        pendingRetryText = text
+
+        val isLocaleSupported = setLocaleForLanguage(currentAppLanguage)
 
         if (isInitialized && tts != null) {
+            if (!isLocaleSupported && currentAppLanguage != AppLanguage.ENGLISH) {
+                // If native voice is not installed on this device (e.g. Marathi/Hindi/Telugu missing TTS data):
+                // Do NOT let an English voice garble native Indian language text.
+                _isSpeaking.value = false
+                _voiceUnavailableMessage.value = getVoiceUnavailableWarning(currentAppLanguage)
+                return
+            }
+
+            _isSpeaking.value = true
+            _isPaused.value = false
             tts?.setSpeechRate(_speechRate.value)
-            // Ensure locale is applied before speech synthesis
-            setLocaleForLanguage(currentAppLanguage)
             tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
         } else {
-            // Simulated speech duration for container environments without native audio hardware
+            // Container/device fallback simulation for preview environments
+            _isSpeaking.value = true
+            _isPaused.value = false
+            val simulatedDurationMs = (text.length * 50L).coerceIn(1800L, 5000L)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 _isSpeaking.value = false
                 _isPaused.value = false
-            }, 2500)
+            }, simulatedDurationMs)
+        }
+    }
+
+    fun speakFeedback(text: String) {
+        speak(text)
+    }
+
+    fun speakLanguageChangedGreeting(lang: AppLanguage) {
+        val greeting = when (lang) {
+            AppLanguage.MARATHI -> "मराठी भाषा निवडली आहे. कबाडीवाला कनेक्टमध्ये आपले स्वागत आहे."
+            AppLanguage.HINDI -> "हिंदी भाषा चुनी गई है। कबाड़ीवाला कनेक्ट में आपका स्वागत है।"
+            AppLanguage.TELUGU -> "తెలుగు భాష ఎంపిక చేయబడింది. కబాడీవాలా కనెక్ట్‌కు స్వాగతం."
+            AppLanguage.TAMIL -> "தமிழ் மொழி தேர்ந்தெடுக்கப்பட்டது. கபாடிவாலா கனெக்டிற்கு வரவேற்கிறோம்."
+            AppLanguage.KANNADA -> "ಕನ್ನಡ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಲಾಗಿದೆ. ಕಬಾಡಿವಾಲಾ ಕನೆಕ್ಟ್‌ಗೆ ಸುಸ್ವಾಗತ."
+            AppLanguage.MALAYALAM -> "മലയാളം ഭാഷ തിരഞ്ഞെടുത്തു. കബാഡിവാല കണക്റ്റിലേക്ക് സ്വാഗതം."
+            AppLanguage.BENGALI -> "বাংলা ভাষা নির্বাচিত হয়েছে। কবাডিওয়ালা কানেক্টে স্বাগতম।"
+            AppLanguage.GUJARATI -> "ગુજરાતી ભાષા પસંદ કરવામાં આવી છે. કબાડીવાલા કનેક્ટમાં આપનું સ્વાગત છે."
+            AppLanguage.PUNJABI -> "ਪੰਜਾਬੀ ਭਾਸ਼ਾ ਚੁਣੀ ਗਈ ਹੈ। ਕਬਾੜੀਵਾਲਾ ਕਨੈਕਟ ਵਿੱਚ ਜੀ ਆਇਆਂ ਨੂੰ।"
+            AppLanguage.ODIA -> "ଓଡ଼ିଆ ଭାଷା ଚୟନ କରାଯାଇଛି। କବାଡିୱାଲା କନେକ୍ଟକୁ ସ୍ୱାଗତ।"
+            AppLanguage.ENGLISH -> "English language selected. Welcome to Kabadiwala Connect."
+        }
+        speak(greeting)
+    }
+
+    fun retry() {
+        val text = pendingRetryText ?: _currentSpokenText.value
+        _voiceUnavailableMessage.value = null
+        if (!text.isNullOrBlank()) {
+            speak(text)
+        }
+    }
+
+    fun clearVoiceWarning() {
+        _voiceUnavailableMessage.value = null
+    }
+
+    private fun getVoiceUnavailableWarning(lang: AppLanguage): String {
+        return when (lang) {
+            AppLanguage.MARATHI -> "या डिव्हाइसवर मराठी व्हॉइस (TTS) उपलब्ध नाही. कृपया डिव्हाइसच्या Settings -> System -> Languages & Input -> Text-to-speech मधून मराठी स्पीच डेटा डाउनलोड करा. (Marathi voice is not installed on this device. Please install Marathi speech data from Text-to-Speech settings.)"
+            AppLanguage.HINDI -> "इस डिवाइस पर हिंदी आवाज उपलब्ध नहीं है। कृपया सेटिंग्स से हिंदी स्पीच डेटा डाउनलोड करें। (Hindi voice is not installed on this device. Please install Hindi speech data from Text-to-Speech settings.)"
+            AppLanguage.TELUGU -> "ఈ పరికరంలో తెలుగు వాయిస్ అందుబాటులో లేదు. దయచేసి సెట్టింగ్‌ల నుండి తెలుగు స్పీచ్ డేటాను డౌన్‌లోడ్ చేయండి. (Telugu voice is not installed on this device. Please install Telugu speech data from Text-to-Speech settings.)"
+            else -> "${lang.displayName} voice data is not installed on this device. Please install it from device Text-to-Speech settings."
         }
     }
 

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -46,6 +47,14 @@ class AppRepository(private val dao: KabadiwalaDao) {
         // Simple demo hash check
         if (user.passwordHash != password.trim() && user.passwordHash != "hash_${password.trim()}") {
             return Result.failure(Exception("Incorrect password. Please try again."))
+        }
+
+        if (user.status == UserStatus.PENDING.name || user.status == "PENDING_APPROVAL" || user.status == "PENDING_VERIFICATION") {
+            return Result.failure(Exception(com.example.service.localization.LocalizationManager.getString("reg_status_pending_desc")))
+        }
+
+        if (user.status == UserStatus.REJECTED.name) {
+            return Result.failure(Exception(com.example.service.localization.LocalizationManager.getString("status_rejected")))
         }
 
         _currentUser.value = user
@@ -389,7 +398,13 @@ class AppRepository(private val dao: KabadiwalaDao) {
     // --- Seed Demo Data ---
     suspend fun seedInitialDataIfNeeded() {
         val existing = dao.findUserByIdentifier("collector")
-        if (existing != null) return // Already seeded
+        if (existing != null) {
+            val count = dao.getPickupRequestsForCollectorFlow(existing.id).firstOrNull()?.size ?: 0
+            if (count < 4) {
+                seedActiveNearbyPickups(existing.id, "recycler_greentech", "recycler_ecoclean")
+            }
+            return
+        }
 
         // 1. Admin
         dao.insertUser(
@@ -664,6 +679,9 @@ class AppRepository(private val dao: KabadiwalaDao) {
         )
         dao.insertPickupRequest(pickup2)
 
+        // Seed additional nearby active pickups for Google Maps routing visualization
+        seedActiveNearbyPickups(collectorId, recycler1Id, recycler2Id)
+
         // 9. Seed Completed Handover & Transaction
         val handoverRef = "KBC-2026-000124"
         dao.insertHandover(
@@ -721,5 +739,96 @@ class AppRepository(private val dao: KabadiwalaDao) {
                 message = "GreenTech Recycling accepted your Circuit Boards pickup request (12 kg)."
             )
         )
+    }
+
+    private suspend fun seedActiveNearbyPickups(collectorId: String, recycler1Id: String, recycler2Id: String) {
+        val additionalPickups = listOf(
+            PickupRequestEntity(
+                lotId = "LOT-2026-003",
+                collectorId = collectorId,
+                collectorName = "Ramu E-Waste Mitra",
+                collectorPhone = "+91 98765 43210",
+                recyclerId = recycler1Id,
+                recyclerName = "GreenTech Recycling Pvt Ltd",
+                materialCategory = "Mobile Phones",
+                weightKg = 8.5,
+                agreedPricePerKg = 360.0,
+                totalValue = 3060.0,
+                pickupAddress = "Hill Road, Bandra West, Mumbai",
+                gpsLat = 19.0596,
+                gpsLng = 72.8295,
+                preferredDateTime = "Today, 5:30 PM",
+                status = PickupStatus.ACCEPTED.name
+            ),
+            PickupRequestEntity(
+                lotId = "LOT-2026-004",
+                collectorId = collectorId,
+                collectorName = "Ramu E-Waste Mitra",
+                collectorPhone = "+91 98765 43210",
+                recyclerId = recycler2Id,
+                recyclerName = "EcoClean Recovery Works",
+                materialCategory = "Batteries",
+                weightKg = 25.0,
+                agreedPricePerKg = 150.0,
+                totalValue = 3750.0,
+                pickupAddress = "Ranade Road, Dadar West, Mumbai",
+                gpsLat = 19.0178,
+                gpsLng = 72.8478,
+                preferredDateTime = "Tomorrow, 10:00 AM",
+                status = PickupStatus.PICKUP_SCHEDULED.name
+            ),
+            PickupRequestEntity(
+                lotId = "LOT-2026-005",
+                collectorId = collectorId,
+                collectorName = "Ramu E-Waste Mitra",
+                collectorPhone = "+91 98765 43210",
+                recyclerId = recycler1Id,
+                recyclerName = "GreenTech Recycling Pvt Ltd",
+                materialCategory = "Cables & Wiring",
+                weightKg = 30.0,
+                agreedPricePerKg = 200.0,
+                totalValue = 6000.0,
+                pickupAddress = "LBS Marg, Kurla West, Mumbai",
+                gpsLat = 19.0688,
+                gpsLng = 72.8856,
+                preferredDateTime = "Tomorrow, 1:00 PM",
+                status = PickupStatus.ACCEPTED.name
+            ),
+            PickupRequestEntity(
+                lotId = "LOT-2026-006",
+                collectorId = collectorId,
+                collectorName = "Ramu E-Waste Mitra",
+                collectorPhone = "+91 98765 43210",
+                recyclerId = recycler2Id,
+                recyclerName = "EcoClean Recovery Works",
+                materialCategory = "Computers & Monitors",
+                weightKg = 42.0,
+                agreedPricePerKg = 230.0,
+                totalValue = 9660.0,
+                pickupAddress = "Hiranandani Gardens, Powai, Mumbai",
+                gpsLat = 19.1197,
+                gpsLng = 72.9051,
+                preferredDateTime = "Today, 6:00 PM",
+                status = PickupStatus.REQUESTED.name
+            ),
+            PickupRequestEntity(
+                lotId = "LOT-2026-007",
+                collectorId = collectorId,
+                collectorName = "Ramu E-Waste Mitra",
+                collectorPhone = "+91 98765 43210",
+                recyclerId = recycler1Id,
+                recyclerName = "GreenTech Recycling Pvt Ltd",
+                materialCategory = "Circuit Boards",
+                weightKg = 16.0,
+                agreedPricePerKg = 440.0,
+                totalValue = 7040.0,
+                pickupAddress = "Station Road, Ghatkopar East, Mumbai",
+                gpsLat = 19.0860,
+                gpsLng = 72.9090,
+                preferredDateTime = "Tomorrow, 11:30 AM",
+                status = PickupStatus.ACCEPTED.name
+            )
+        )
+        additionalPickups.forEach { dao.insertPickupRequest(it) }
     }
 }

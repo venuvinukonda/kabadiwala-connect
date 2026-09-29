@@ -150,7 +150,7 @@ fun RecyclerDashboardScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Total Scrap", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(LocalizationManager.getString("total_scrap"), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("${totalProcessedKg.toInt()} kg", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
                 }
@@ -160,7 +160,7 @@ fun RecyclerDashboardScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Total Payouts", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(LocalizationManager.getString("total_payouts"), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("₹${totalPayouts.toInt()}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = WarmOrangeSecondary)
                     }
                 }
@@ -171,8 +171,8 @@ fun RecyclerDashboardScreen(
                     colors = CardDefaults.cardColors(containerColor = if (pendingRequestsCount > 0) WarmOrangeContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Requests", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("$pendingRequestsCount New", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = if (pendingRequestsCount > 0) WarmOrangeOnContainer else MaterialTheme.colorScheme.onSurface)
+                        Text(LocalizationManager.getString("requests_label"), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("$pendingRequestsCount " + LocalizationManager.getString("new_requests_count"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = if (pendingRequestsCount > 0) WarmOrangeOnContainer else MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }
@@ -181,8 +181,8 @@ fun RecyclerDashboardScreen(
 
             // Main Recycler Options (Section 16)
             RecyclerActionRow(
-                title = "Incoming Lot Requests ($pendingRequestsCount pending)",
-                subtitle = "Accept or decline pickup requests from collectors",
+                title = LocalizationManager.getString("pending_requests") + " ($pendingRequestsCount)",
+                subtitle = LocalizationManager.getString("pending_verification_desc"),
                 icon = Icons.Default.MarkEmailUnread,
                 onClick = onLotRequestsClick,
                 testTag = "recycler_lot_requests_row"
@@ -298,7 +298,7 @@ fun RecyclerLotRequestsScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.Inbox, contentDescription = null, modifier = Modifier.size(54.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("No pending requests from collectors.", fontWeight = FontWeight.Bold)
+                    Text(LocalizationManager.getString("no_pending_requests"), fontWeight = FontWeight.Bold)
                 }
             }
         } else {
@@ -315,17 +315,17 @@ fun RecyclerLotRequestsScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("NEW LOT REQUEST", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
+                                Text(LocalizationManager.getString("new_lot_request"), fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
                                 StatusChip(status = req.status)
                             }
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            Text("Material: ${req.materialCategory}", fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                            Text("Quantity: ${req.weightKg} kg  •  Estimated Rate: ₹${req.agreedPricePerKg.toInt()}/kg", fontSize = 14.sp)
-                            Text("Collector: ${req.collectorName} (${req.collectorPhone})", fontSize = 13.sp)
-                            Text("Location: ${req.pickupAddress}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("Estimated Total Value: ₹${req.totalValue.toInt()}", fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = WarmOrangeSecondary)
+                            Text("${LocalizationManager.getString("material_label")}: ${req.materialCategory}", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                            Text("${LocalizationManager.getString("quantity_label")}: ${req.weightKg} kg  •  ${LocalizationManager.getString("estimated_rate")}: ₹${req.agreedPricePerKg.toInt()}/kg", fontSize = 14.sp)
+                            Text("${LocalizationManager.getString("collector_label")}: ${req.collectorName} (${req.collectorPhone})", fontSize = 13.sp)
+                            Text("${LocalizationManager.getString("location_label")}: ${req.pickupAddress}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${LocalizationManager.getString("total_valuation")}: ₹${req.totalValue.toInt()}", fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = WarmOrangeSecondary)
 
                             if (req.status == PickupStatus.REQUESTED.name) {
                                 Spacer(modifier = Modifier.height(14.dp))
@@ -335,14 +335,14 @@ fun RecyclerLotRequestsScreen(
                                         modifier = Modifier.weight(1f).height(44.dp).testTag("accept_req_${req.id}"),
                                         shape = RoundedCornerShape(10.dp)
                                     ) {
-                                        Text("ACCEPT", fontWeight = FontWeight.Bold)
+                                        Text(LocalizationManager.getString("approve"), fontWeight = FontWeight.Bold)
                                     }
                                     OutlinedButton(
                                         onClick = { viewModel.rejectPickupRequest(req) },
                                         modifier = Modifier.weight(1f).height(44.dp).testTag("reject_req_${req.id}"),
                                         shape = RoundedCornerShape(10.dp)
                                     ) {
-                                        Text("REJECT", fontWeight = FontWeight.Bold)
+                                        Text(LocalizationManager.getString("reject"), fontWeight = FontWeight.Bold)
                                     }
                                 }
                             } else if (req.status == PickupStatus.ACCEPTED.name) {
@@ -352,7 +352,7 @@ fun RecyclerLotRequestsScreen(
                                     modifier = Modifier.fillMaxWidth().height(44.dp),
                                     shape = RoundedCornerShape(10.dp)
                                 ) {
-                                    Text("Schedule Van Pickup")
+                                    Text(LocalizationManager.getString("schedule_van_pickup"))
                                 }
                             }
                         }
@@ -402,8 +402,8 @@ fun RecyclerRatesConfigScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            Text("Offered Buying Rates (₹ / kg)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text("Update your current purchasing prices for collectors.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(LocalizationManager.getString("offered_buying_rates"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(LocalizationManager.getString("update_buying_prices"), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             Spacer(modifier = Modifier.height(14.dp))
 
@@ -415,7 +415,7 @@ fun RecyclerRatesConfigScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Text("Pickup Rules", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(LocalizationManager.getString("pickup_rules"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -424,7 +424,7 @@ fun RecyclerRatesConfigScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Offer Doorstep Pickup Availability", fontWeight = FontWeight.Medium)
+                Text(LocalizationManager.getString("offer_doorstep_pickup"), fontWeight = FontWeight.Medium)
                 Switch(checked = pickupAvail, onCheckedChange = { pickupAvail = it })
             }
 
@@ -434,14 +434,14 @@ fun RecyclerRatesConfigScreen(
                 OutlinedTextField(
                     value = minQty,
                     onValueChange = { minQty = it },
-                    label = { Text("Min Lot Qty (kg)") },
+                    label = { Text(LocalizationManager.getString("min_lot_qty")) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
                     value = radius,
                     onValueChange = { radius = it },
-                    label = { Text("Pickup Radius (km)") },
+                    label = { Text(LocalizationManager.getString("pickup_radius")) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f)
                 )
@@ -463,7 +463,7 @@ fun RecyclerRatesConfigScreen(
                 modifier = Modifier.fillMaxWidth().height(50.dp).testTag("save_rates_button"),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Save Rates & Settings", fontWeight = FontWeight.Bold)
+                Text(LocalizationManager.getString("save_rates_settings"), fontWeight = FontWeight.Bold)
             }
         }
     }

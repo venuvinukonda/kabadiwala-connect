@@ -1,9 +1,11 @@
 package com.example.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,10 +17,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.service.localization.AppLanguage
@@ -420,25 +427,48 @@ fun LanguageDialog(
                     modifier = Modifier.size(28.dp)
                 )
                 Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = LocalizationManager.getString("select_language"),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
+                Column {
+                    Text(
+                        text = LocalizationManager.getString("select_language"),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                    Text(
+                        text = "मराठी, English, हिन्दी, తెలుగు & more",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         },
         text = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 420.dp)
+                    .heightIn(max = 440.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
                 ) {
-                    AppLanguage.entries.forEach { lang ->
+                    val orderedLanguages = listOf(
+                        AppLanguage.ENGLISH,
+                        AppLanguage.MARATHI,
+                        AppLanguage.HINDI,
+                        AppLanguage.TELUGU,
+                        AppLanguage.TAMIL,
+                        AppLanguage.KANNADA,
+                        AppLanguage.MALAYALAM,
+                        AppLanguage.GUJARATI,
+                        AppLanguage.BENGALI,
+                        AppLanguage.PUNJABI,
+                        AppLanguage.ODIA
+                    )
+
+                    orderedLanguages.forEach { lang ->
+                        val isSelected = currentLang == lang
+                        val isMarathi = lang == AppLanguage.MARATHI
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -449,10 +479,11 @@ fun LanguageDialog(
                                 }
                                 .testTag("lang_option_${lang.code}"),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (currentLang == lang)
-                                    MaterialTheme.colorScheme.primaryContainer
-                                else
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                containerColor = when {
+                                    isSelected -> MaterialTheme.colorScheme.primaryContainer
+                                    isMarathi -> DeepGreenContainer.copy(alpha = 0.35f)
+                                    else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                }
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -464,22 +495,39 @@ fun LanguageDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = lang.nativeName,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 17.sp,
+                                            color = if (isSelected)
+                                                MaterialTheme.colorScheme.onPrimaryContainer
+                                            else
+                                                MaterialTheme.colorScheme.onSurface
+                                        )
+                                        if (isMarathi) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = DeepGreenPrimary.copy(alpha = 0.2f)
+                                            ) {
+                                                Text(
+                                                    text = "महाराष्ट्र",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = DeepGreenPrimary,
+                                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                                )
+                                            }
+                                        }
+                                    }
                                     Text(
-                                        text = lang.nativeName,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 17.sp,
-                                        color = if (currentLang == lang)
-                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                        else
-                                            MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = lang.displayName,
-                                        fontSize = 13.sp,
+                                        text = "${lang.displayName} • ${lang.localeTag}",
+                                        fontSize = 12.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                if (currentLang == lang) {
+                                if (isSelected) {
                                     Icon(
                                         imageVector = Icons.Default.CheckCircle,
                                         contentDescription = "Selected",
@@ -502,4 +550,301 @@ fun LanguageDialog(
             }
         }
     )
+}
+
+@Composable
+fun FloatingAudioPlayerBar(
+    currentText: String,
+    isSpeaking: Boolean,
+    isPaused: Boolean,
+    speechRate: Float,
+    currentLang: AppLanguage,
+    onPlayPause: () -> Unit,
+    onReplay: () -> Unit,
+    onStop: () -> Unit,
+    onSpeedChange: (Float) -> Unit,
+    onLanguageClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag("floating_audio_player_bar"),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = if (isSpeaking) DeepGreenContainer else MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = if (isSpeaking) Icons.Default.Hearing else Icons.Default.VolumeUp,
+                                contentDescription = null,
+                                tint = if (isSpeaking) DeepGreenPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = if (isSpeaking) LocalizationManager.getString("now_speaking") else LocalizationManager.getString("pause"),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSpeaking) DeepGreenPrimary else MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                modifier = Modifier.clickable { onLanguageClick() }
+                            ) {
+                                Text(
+                                    text = "${currentLang.nativeName} (${currentLang.code.uppercase()})",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                        Text(
+                            text = currentText,
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // Speed chip
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.clickable {
+                            val nextSpeed = when {
+                                speechRate < 0.9f -> 1.0f
+                                speechRate < 1.15f -> 1.25f
+                                else -> 0.75f
+                            }
+                            onSpeedChange(nextSpeed)
+                        }
+                    ) {
+                        Text(
+                            text = "${speechRate}x",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    // Replay button
+                    IconButton(
+                        onClick = onReplay,
+                        modifier = Modifier.size(36.dp).testTag("audio_player_replay_btn")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Replay,
+                            contentDescription = LocalizationManager.getString("replay"),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    // Play/Pause button
+                    IconButton(
+                        onClick = onPlayPause,
+                        modifier = Modifier.size(36.dp).testTag("audio_player_play_pause_btn")
+                    ) {
+                        Icon(
+                            imageVector = if (isSpeaking) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (isSpeaking) LocalizationManager.getString("pause") else LocalizationManager.getString("play"),
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    // Stop/Close button
+                    IconButton(
+                        onClick = onStop,
+                        modifier = Modifier.size(36.dp).testTag("audio_player_stop_btn")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = LocalizationManager.getString("stop"),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun VoiceUnavailableDialog(
+    message: String,
+    onRetry: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Default.VolumeOff,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(36.dp)
+            )
+        },
+        title = {
+            Text(
+                text = LocalizationManager.getString("voice_unavailable_title"),
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = message,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onRetry,
+                modifier = Modifier.testTag("voice_unavailable_retry_btn")
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(LocalizationManager.getString("retry"), fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.testTag("voice_unavailable_dismiss_btn")
+            ) {
+                Text(LocalizationManager.getString("close"), fontWeight = FontWeight.Bold)
+            }
+        }
+    )
+}
+
+/**
+ * Custom smooth Material 3 vertical scrollbar for regular scrollable columns.
+ * Displays a visible track and rounded thumb when content overflows.
+ */
+fun Modifier.verticalScrollbar(
+    scrollState: ScrollState,
+    color: Color = DeepGreenPrimary,
+    thickness: Dp = 6.dp,
+    padding: Dp = 3.dp
+): Modifier = this.drawWithContent {
+    drawContent()
+    val maxScroll = scrollState.maxValue.toFloat()
+    if (maxScroll > 0) {
+        val viewportHeight = size.height
+        val scroll = scrollState.value.toFloat()
+        val contentHeight = viewportHeight + maxScroll
+        val thumbHeight = (viewportHeight / contentHeight * viewportHeight).coerceIn(48f, viewportHeight)
+        val scrollRatio = (scroll / maxScroll).coerceIn(0f, 1f)
+        val thumbOffset = scrollRatio * (viewportHeight - thumbHeight)
+
+        // Semi-transparent track
+        drawRoundRect(
+            color = Color.Black.copy(alpha = 0.08f),
+            topLeft = Offset(size.width - thickness.toPx() - padding.toPx(), 0f),
+            size = Size(thickness.toPx(), viewportHeight),
+            cornerRadius = CornerRadius(thickness.toPx() / 2, thickness.toPx() / 2)
+        )
+
+        // Active thumb
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(size.width - thickness.toPx() - padding.toPx(), thumbOffset),
+            size = Size(thickness.toPx(), thumbHeight),
+            cornerRadius = CornerRadius(thickness.toPx() / 2, thickness.toPx() / 2),
+            alpha = 0.9f
+        )
+    }
+}
+
+/**
+ * Custom smooth Material 3 vertical scrollbar for LazyColumn lists.
+ * Displays a visible track and rounded thumb when content overflows.
+ */
+fun Modifier.verticalScrollbar(
+    lazyListState: LazyListState,
+    color: Color = DeepGreenPrimary,
+    thickness: Dp = 6.dp,
+    padding: Dp = 3.dp
+): Modifier = this.drawWithContent {
+    drawContent()
+    val layoutInfo = lazyListState.layoutInfo
+    val totalItems = layoutInfo.totalItemsCount
+    val visibleItems = layoutInfo.visibleItemsInfo
+    if (totalItems > 0 && visibleItems.isNotEmpty()) {
+        val firstVisible = visibleItems.first().index
+        val visibleCount = visibleItems.size
+        if (visibleCount < totalItems) {
+            val viewportHeight = size.height
+            val thumbHeight = ((visibleCount.toFloat() / totalItems) * viewportHeight).coerceIn(48f, viewportHeight)
+            val scrollRatio = (firstVisible.toFloat() / (totalItems - visibleCount)).coerceIn(0f, 1f)
+            val thumbOffset = scrollRatio * (viewportHeight - thumbHeight)
+
+            // Semi-transparent track
+            drawRoundRect(
+                color = Color.Black.copy(alpha = 0.08f),
+                topLeft = Offset(size.width - thickness.toPx() - padding.toPx(), 0f),
+                size = Size(thickness.toPx(), viewportHeight),
+                cornerRadius = CornerRadius(thickness.toPx() / 2, thickness.toPx() / 2)
+            )
+
+            // Active thumb
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(size.width - thickness.toPx() - padding.toPx(), thumbOffset),
+                size = Size(thickness.toPx(), thumbHeight),
+                cornerRadius = CornerRadius(thickness.toPx() / 2, thickness.toPx() / 2),
+                alpha = 0.9f
+            )
+        }
+    }
 }

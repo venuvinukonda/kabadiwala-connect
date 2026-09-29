@@ -19,6 +19,8 @@ android {
     versionCode = 1
     versionName = "1.0"
 
+    manifestPlaceholders["MAPS_API_KEY"] = "AIzaSyDFjZdpr7KKp1pDWsTCAGD_RrJe0_sW8vw"
+
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
@@ -116,7 +118,9 @@ dependencies {
   implementation(libs.logging.interceptor)
   implementation(libs.moshi.kotlin)
   implementation(libs.okhttp)
-  // implementation(libs.play.services.location)
+  implementation(libs.play.services.location)
+  implementation(libs.play.services.maps)
+  implementation(libs.maps.compose)
   implementation(libs.retrofit)
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)
@@ -131,6 +135,6 @@ dependencies {
   androidTestImplementation(libs.androidx.runner)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
   debugImplementation(libs.androidx.compose.ui.tooling)
-  "ksp"(libs.androidx.room.compiler)
-  "ksp"(libs.moshi.kotlin.codegen)
+  ksp(libs.androidx.room.compiler)
+  ksp(libs.moshi.kotlin.codegen)
 }

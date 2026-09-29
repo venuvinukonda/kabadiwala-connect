@@ -37,7 +37,7 @@ abstract class KabadiwalaDatabase : RoomDatabase() {
                     KabadiwalaDatabase::class.java,
                     "kabadiwala_connect_db"
                 )
-                .fallbackToDestructiveMigration()
+                .fallbackToDestructiveMigration(dropAllTables = true)
                 .build()
                 INSTANCE = instance
                 instance

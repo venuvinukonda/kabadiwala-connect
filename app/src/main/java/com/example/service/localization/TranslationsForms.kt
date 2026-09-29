@@ -525,6 +525,450 @@ object TranslationsForms {
             AppLanguage.GUJARATI to "કૃપા કરીને ઓળખ અને પાસવર્ડ બંને દાખલ કરો",
             AppLanguage.PUNJABI to "ਕਿਰਪਾ ਕਰਕੇ ਯੂਜ਼ਰਨੇਮ ਅਤੇ ਪਾਸਵਰਡ ਦੋਵੇਂ ਦਰਜ ਕਰੋ",
             AppLanguage.ODIA to "ଦୟାକରି ୟୁଜରନେମ୍ ଏବଂ ପାସୱାର୍ଡ ଉଭୟ ପ୍ରବେଶ କରନ୍ତୁ"
+        ),
+        "val_valid_mobile" to mapOf(
+            AppLanguage.ENGLISH to "Please enter a valid mobile number.",
+            AppLanguage.MARATHI to "कृपया वैध मोबाईल क्रमांक प्रविष्ट करा.",
+            AppLanguage.HINDI to "कृपया एक वैध मोबाइल नंबर दर्ज करें।",
+            AppLanguage.TELUGU to "దయచేసి సరైన మొబైల్ నంబర్‌ను నమోదు చేయండి."
+        ),
+        "val_password_mismatch" to mapOf(
+            AppLanguage.ENGLISH to "Passwords do not match.",
+            AppLanguage.MARATHI to "पासवर्ड जुळत नाहीत.",
+            AppLanguage.HINDI to "पासवर्ड मेल नहीं खाते।",
+            AppLanguage.TELUGU to "పాస్‌వర్డ్‌లు సరిపోలడం లేదు."
+        ),
+        "val_field_required" to mapOf(
+            AppLanguage.ENGLISH to "This field is required.",
+            AppLanguage.MARATHI to "हे फील्ड आवश्यक आहे.",
+            AppLanguage.HINDI to "यह फ़ील्ड आवश्यक है।",
+            AppLanguage.TELUGU to "ఈ ఫీల్డ్ తప్పనిసరి."
+        ),
+        "reg_success_waiting_approval" to mapOf(
+            AppLanguage.ENGLISH to "Registration submitted successfully. Your account is waiting for administrator approval.",
+            AppLanguage.MARATHI to "नोंदणी यशस्वीरित्या सबमिट केली. आपले खाते प्रशासकीय मंजुरीच्या प्रतीक्षेत आहे.",
+            AppLanguage.HINDI to "पंजीकरण सफलतापूर्वक जमा हो गया। आपका खाता व्यवस्थापक की मंजूरी की प्रतीक्षा कर रहा है।",
+            AppLanguage.TELUGU to "నమోదు విజయవంతంగా సమర్పించబడింది. మీ ఖాతా అడ్మిన్ ఆమోదం కోసం వేచి ఉంది."
+        ),
+        "account_status_label" to mapOf(
+            AppLanguage.ENGLISH to "Account Status",
+            AppLanguage.MARATHI to "खाते स्थिती",
+            AppLanguage.HINDI to "खाता स्थिति",
+            AppLanguage.TELUGU to "ఖాతా స్థితి"
+        ),
+        "status_pending_approval" to mapOf(
+            AppLanguage.ENGLISH to "PENDING_APPROVAL",
+            AppLanguage.MARATHI to "मंजुरी प्रलंबित (PENDING_APPROVAL)",
+            AppLanguage.HINDI to "मंजूरी लंबित (PENDING_APPROVAL)",
+            AppLanguage.TELUGU to "ఆమోదం వేచి ఉంది (PENDING_APPROVAL)"
+        ),
+        "status_pending_verification" to mapOf(
+            AppLanguage.ENGLISH to "PENDING_VERIFICATION",
+            AppLanguage.MARATHI to "पडताळणी प्रलंबित (PENDING_VERIFICATION)",
+            AppLanguage.HINDI to "सत्यापन लंबित (PENDING_VERIFICATION)",
+            AppLanguage.TELUGU to "ధృవీకరణ వేచి ఉంది (PENDING_VERIFICATION)"
+        ),
+        "already_have_account" to mapOf(
+            AppLanguage.ENGLISH to "Already have an account?",
+            AppLanguage.MARATHI to "आधीपासून खाते आहे का?",
+            AppLanguage.HINDI to "क्या आपके पास पहले से खाता है?",
+            AppLanguage.TELUGU to "ఇప్పటికే ఖాతా ఉందా?"
+        ),
+        "dont_have_account" to mapOf(
+            AppLanguage.ENGLISH to "Don't have an account?",
+            AppLanguage.MARATHI to "तुमचे खाते नाही का?",
+            AppLanguage.HINDI to "क्या आपके पास खाता नहीं है?",
+            AppLanguage.TELUGU to "ఖాతా లేదా?"
+        ),
+        "register_as_collector" to mapOf(
+            AppLanguage.ENGLISH to "Register as E-waste Collector",
+            AppLanguage.MARATHI to "ई-कचरा संकलक म्हणून नोंदणी करा",
+            AppLanguage.HINDI to "ई-कचरा संग्राहक के रूप में पंजीकरण करें",
+            AppLanguage.TELUGU to "ఇ-వ్యర్థాల సేకర్తగా నమోదు చేసుకోండి"
+        ),
+        "register_as_recycler" to mapOf(
+            AppLanguage.ENGLISH to "Register as Authorized Recycler",
+            AppLanguage.MARATHI to "अधिकृत रिसायकलर म्हणून नोंदणी करा",
+            AppLanguage.HINDI to "अधिकृत पुनर्चक्रणकर्ता के रूप में पंजीकरण करें",
+            AppLanguage.TELUGU to "అధీకృత రీసైక్లర్‌గా నమోదు చేసుకోండి"
+        ),
+        "confirm_password" to mapOf(
+            AppLanguage.ENGLISH to "Confirm Password *",
+            AppLanguage.MARATHI to "पासवर्डची पुष्टी करा *",
+            AppLanguage.HINDI to "पासवर्ड की पुष्टि करें *",
+            AppLanguage.TELUGU to "పాస్‌వర్డ్‌ను నిర్ధారించండి *"
+        ),
+        "email_optional" to mapOf(
+            AppLanguage.ENGLISH to "Email Address (Optional)",
+            AppLanguage.MARATHI to "ईमेल पत्ता (पर्यायी)",
+            AppLanguage.HINDI to "ईमेल पता (वैकल्पिक)",
+            AppLanguage.TELUGU to "ఈమెయిల్ చిరునామా (ఐచ్ఛికం)"
+        ),
+        "preferred_collection_area" to mapOf(
+            AppLanguage.ENGLISH to "Preferred Collection Area *",
+            AppLanguage.MARATHI to "पसंतीचे संकलन क्षेत्र *",
+            AppLanguage.HINDI to "पसंदीदा संग्रह क्षेत्र *",
+            AppLanguage.TELUGU to "ప్రాధాన్య సేకరణ ప్రాంతం *"
+        ),
+        "govt_cert_upload" to mapOf(
+            AppLanguage.ENGLISH to "Government Authorization / Certificate *",
+            AppLanguage.MARATHI to "शासकीय अधिकृतता / प्रमाणपत्र *",
+            AppLanguage.HINDI to "सरकारी प्राधिकरण / प्रमाणपत्र *",
+            AppLanguage.TELUGU to "ప్రభుత్వ అధికార పత్రం / సర్టిఫికేట్ *"
+        ),
+        "certificate_attached" to mapOf(
+            AppLanguage.ENGLISH to "Certificate Attached",
+            AppLanguage.MARATHI to "प्रमाणपत्र जोडले गेले",
+            AppLanguage.HINDI to "प्रमाणपत्र संलग्न",
+            AppLanguage.TELUGU to "సర్టిఫికేట్ జతచేయబడింది"
+        ),
+        "upload_certificate_btn" to mapOf(
+            AppLanguage.ENGLISH to "Attach Certificate Document / PDF / Image",
+            AppLanguage.MARATHI to "प्रमाणपत्र दस्तऐवज / PDF / फोटो जोडा",
+            AppLanguage.HINDI to "प्रमाणपत्र दस्तावेज़ / पीडीएफ / चित्र संलग्न करें",
+            AppLanguage.TELUGU to "సర్టిఫికేట్ పత్రం / PDF / చిత్రం జతచేయండి"
+        ),
+        "retry" to mapOf(
+            AppLanguage.ENGLISH to "Retry",
+            AppLanguage.MARATHI to "पुन्हा प्रयत्न करा",
+            AppLanguage.HINDI to "पुनः प्रयास करें",
+            AppLanguage.TELUGU to "మళ్లీ ప్రయత్నించండి"
+        ),
+        "admin_compliance_title" to mapOf(
+            AppLanguage.ENGLISH to "System Operations & Compliance",
+            AppLanguage.MARATHI to "प्रणाली संचालन आणि अनुपालन",
+            AppLanguage.HINDI to "सिस्टम संचालन और अनुपालन",
+            AppLanguage.TELUGU to "సిస్టమ్ కార్యకలాపాలు మరియు వర్తింపు"
+        ),
+        "admin_compliance_desc" to mapOf(
+            AppLanguage.ENGLISH to "Manage CPCB/SPCB authorizations, collectors, and resolve disputes",
+            AppLanguage.MARATHI to "CPCB/SPCB अधिकृतता, संकलक व्यवस्थापित करा आणि वाद सोडवा",
+            AppLanguage.HINDI to "CPCB/SPCB प्राधिकरण, संग्राहकों का प्रबंधन और विवाद समाधान",
+            AppLanguage.TELUGU to "CPCB/SPCB అధికారాలు, సేకర్తలను నిర్వహించండి మరియు వివాదాలను పరిష్కరించండి"
+        ),
+        "reg_approvals_title" to mapOf(
+            AppLanguage.ENGLISH to "Registration Approvals",
+            AppLanguage.MARATHI to "नोंदणी मंजुरी",
+            AppLanguage.HINDI to "पंजीकरण अनुमोदन",
+            AppLanguage.TELUGU to "నమోదు ఆమోదాలు"
+        ),
+        "pending_verification_desc" to mapOf(
+            AppLanguage.ENGLISH to "Collectors & Recyclers waiting for license verification",
+            AppLanguage.MARATHI to "संकलक आणि रिसायकलर्स परवाना पडताळणीच्या प्रतीक्षेत",
+            AppLanguage.HINDI to "संग्राहक और पुनर्चक्रणकर्ता लाइसेंस सत्यापन की प्रतीक्षा में",
+            AppLanguage.TELUGU to "లైసెన్స్ ధృవీకరణ కోసం వేచి ఉన్న సేకర్తలు & రీసైక్లర్లు"
+        ),
+        "analytics_logs_title" to mapOf(
+            AppLanguage.ENGLISH to "Analytics & Audit Logs",
+            AppLanguage.MARATHI to "विश्लेषण आणि ऑडिट नोंदी",
+            AppLanguage.HINDI to "एनालिटिक्स और ऑडिट लॉग",
+            AppLanguage.TELUGU to "విశ్లేషణలు మరియు ఆడిట్ లాగ్‌లు"
+        ),
+        "analytics_logs_desc" to mapOf(
+            AppLanguage.ENGLISH to "Category distribution, collection trends & compliance logs",
+            AppLanguage.MARATHI to "श्रेणी वितरण, संकलन कल आणि अनुपालन नोंदी",
+            AppLanguage.HINDI to "श्रेणी वितरण, संग्रह रुझान और अनुपालन लॉग",
+            AppLanguage.TELUGU to "వర్గం పంపిణీ, సేకరణ పోకడలు & వర్తింపు లాగ్‌లు"
+        ),
+        "approve" to mapOf(
+            AppLanguage.ENGLISH to "Approve",
+            AppLanguage.MARATHI to "मंजूर करा",
+            AppLanguage.HINDI to "स्वीकृत करें",
+            AppLanguage.TELUGU to "ఆమోదించండి"
+        ),
+        "reject" to mapOf(
+            AppLanguage.ENGLISH to "Reject",
+            AppLanguage.MARATHI to "नाकारा",
+            AppLanguage.HINDI to "अस्वीकार करें",
+            AppLanguage.TELUGU to "తిరస్కరించండి"
+        ),
+        "total_scrap" to mapOf(
+            AppLanguage.ENGLISH to "Total Scrap",
+            AppLanguage.MARATHI to "एकूण भंगार",
+            AppLanguage.HINDI to "कुल स्क्रैप",
+            AppLanguage.TELUGU to "మొత్తం స్క్రాప్"
+        ),
+        "requests_label" to mapOf(
+            AppLanguage.ENGLISH to "Requests",
+            AppLanguage.MARATHI to "विनंत्या",
+            AppLanguage.HINDI to "अनुरोध",
+            AppLanguage.TELUGU to "అభ్యర్థనలు"
+        ),
+        "new_requests_count" to mapOf(
+            AppLanguage.ENGLISH to "New",
+            AppLanguage.MARATHI to "नवीन",
+            AppLanguage.HINDI to "नया",
+            AppLanguage.TELUGU to "కొత్తది"
+        ),
+        "no_pending_requests" to mapOf(
+            AppLanguage.ENGLISH to "No pending requests from collectors.",
+            AppLanguage.MARATHI to "संकलकांकडून कोणतीही प्रलंबित विनंती नाही.",
+            AppLanguage.HINDI to "संग्राहकों से कोई लंबित अनुरोध नहीं है।",
+            AppLanguage.TELUGU to "సేకర్తల నుండి పెండింగ్ అభ్యర్థనలు లేవు."
+        ),
+        "new_lot_request" to mapOf(
+            AppLanguage.ENGLISH to "NEW LOT REQUEST",
+            AppLanguage.MARATHI to "नवीन लॉट विनंती",
+            AppLanguage.HINDI to "नया लॉट अनुरोध",
+            AppLanguage.TELUGU to "కొత్త లాట్ అభ్యర్థన"
+        ),
+        "material_label" to mapOf(
+            AppLanguage.ENGLISH to "Material",
+            AppLanguage.MARATHI to "साहित्य",
+            AppLanguage.HINDI to "सामग्री",
+            AppLanguage.TELUGU to "పదార్థం"
+        ),
+        "quantity_label" to mapOf(
+            AppLanguage.ENGLISH to "Quantity",
+            AppLanguage.MARATHI to "प्रमाण",
+            AppLanguage.HINDI to "मात्रा",
+            AppLanguage.TELUGU to "పరిమాణం"
+        ),
+        "collector_label" to mapOf(
+            AppLanguage.ENGLISH to "Collector",
+            AppLanguage.MARATHI to "संकलक",
+            AppLanguage.HINDI to "संग्राहक",
+            AppLanguage.TELUGU to "సేకర్త"
+        ),
+        "location_label" to mapOf(
+            AppLanguage.ENGLISH to "Location",
+            AppLanguage.MARATHI to "ठिकाण",
+            AppLanguage.HINDI to "स्थान",
+            AppLanguage.TELUGU to "ప్రాంతం"
+        ),
+        "schedule_van_pickup" to mapOf(
+            AppLanguage.ENGLISH to "Schedule Van Pickup",
+            AppLanguage.MARATHI to "व्हॅन पिकअप शेड्यूल करा",
+            AppLanguage.HINDI to "वैन पिकअप शेड्यूल करें",
+            AppLanguage.TELUGU to "వ్యాన్ పికప్ షెడ్యూల్ చేయండి"
+        ),
+        "offered_buying_rates" to mapOf(
+            AppLanguage.ENGLISH to "Offered Buying Rates (₹ / kg)",
+            AppLanguage.MARATHI to "ऑफर केलेले खरेदी दर (₹ / किलो)",
+            AppLanguage.HINDI to "प्रस्तावित खरीद दरें (₹ / किग्रा)",
+            AppLanguage.TELUGU to "ఆఫర్ చేసిన కొనుగోలు ధరలు (₹ / కిలో)"
+        ),
+        "update_buying_prices" to mapOf(
+            AppLanguage.ENGLISH to "Update your current purchasing prices for collectors.",
+            AppLanguage.MARATHI to "संकलकांसाठी आपल्या खरेदी किमती अद्यतनित करा.",
+            AppLanguage.HINDI to "संग्राहकों के लिए अपने वर्तमान खरीद मूल्य अपडेट करें।",
+            AppLanguage.TELUGU to "సేకర్తల కోసం మీ ప్రస్తుత కొనుగోలు ధరలను అప్‌డేట్ చేయండి."
+        ),
+        "pickup_rules" to mapOf(
+            AppLanguage.ENGLISH to "Pickup Rules",
+            AppLanguage.MARATHI to "पिकअप नियम",
+            AppLanguage.HINDI to "पिकअप नियम",
+            AppLanguage.TELUGU to "పికప్ నియమాలు"
+        ),
+        "offer_doorstep_pickup" to mapOf(
+            AppLanguage.ENGLISH to "Offer Doorstep Pickup Availability",
+            AppLanguage.MARATHI to "घरोघरी पिकअप सेवा उपलब्ध करा",
+            AppLanguage.HINDI to "घर-घर पिकअप उपलब्धता प्रदान करें",
+            AppLanguage.TELUGU to "డోర్‌స్టెప్ పికప్ లభ్యతను అందించండి"
+        ),
+        "min_lot_qty" to mapOf(
+            AppLanguage.ENGLISH to "Min Lot Qty (kg)",
+            AppLanguage.MARATHI to "किमान लॉट प्रमाण (किलो)",
+            AppLanguage.HINDI to "न्यूनतम लॉट मात्रा (किग्रा)",
+            AppLanguage.TELUGU to "కనిష్ట లాట్ పరిమాణం (కిలో)"
+        ),
+        "pickup_radius" to mapOf(
+            AppLanguage.ENGLISH to "Pickup Radius (km)",
+            AppLanguage.MARATHI to "पिकअप त्रिज्या (किमी)",
+            AppLanguage.HINDI to "पिकअप दायरा (किमी)",
+            AppLanguage.TELUGU to "పికప్ వ్యాసార్థం (కిమీ)"
+        ),
+        "save_rates_settings" to mapOf(
+            AppLanguage.ENGLISH to "Save Rates & Settings",
+            AppLanguage.MARATHI to "दर आणि सेटिंग्ज जतन करा",
+            AppLanguage.HINDI to "दरें और सेटिंग्स सहेजें",
+            AppLanguage.TELUGU to "ధరలు మరియు సెట్టింగ్‌లను సేవ్ చేయండి"
+        ),
+        "govt_auth_certificate" to mapOf(
+            AppLanguage.ENGLISH to "GOVERNMENT AUTHORIZATION CERTIFICATE",
+            AppLanguage.MARATHI to "शासकीय अधिकृतता प्रमाणपत्र",
+            AppLanguage.HINDI to "सरकारी प्राधिकरण प्रमाणपत्र",
+            AppLanguage.TELUGU to "ప్రభుత్వ అధికార ధృవీకరణ పత్రం"
+        ),
+        "lot_id_label" to mapOf(
+            AppLanguage.ENGLISH to "Lot ID",
+            AppLanguage.MARATHI to "लॉट आयडी",
+            AppLanguage.HINDI to "लॉट आईडी",
+            AppLanguage.TELUGU to "లాట్ ఐడి"
+        ),
+        "agreed_rate_label" to mapOf(
+            AppLanguage.ENGLISH to "Agreed Rate",
+            AppLanguage.MARATHI to "मंजूर दर",
+            AppLanguage.HINDI to "सहमति दर",
+            AppLanguage.TELUGU to "ఒప్పుకున్న రేటు"
+        ),
+        "actual_weight_label" to mapOf(
+            AppLanguage.ENGLISH to "Actual Inspected Weight (kg) *",
+            AppLanguage.MARATHI to "प्रत्यक्ष तपासलेले वजन (किलो) *",
+            AppLanguage.HINDI to "वास्तविक निरीक्षण वजन (किग्रा) *",
+            AppLanguage.TELUGU to "వాస్తవ తనిఖీ బరువు (కిలో) *"
+        ),
+        "final_payable" to mapOf(
+            AppLanguage.ENGLISH to "Final Payable Amount",
+            AppLanguage.MARATHI to "अंतिम देय रक्कम",
+            AppLanguage.HINDI to "अंतिम देय राशि",
+            AppLanguage.TELUGU to "తుది చెల్లించవలసిన మొత్తం"
+        ),
+        "handover_confirm_note" to mapOf(
+            AppLanguage.ENGLISH to "Both Collector and Recycler confirm weight and handover in person.",
+            AppLanguage.MARATHI to "संकलक आणि रिसायकलर दोघेही समोरासमोर वजन आणि हस्तांतरण निश्चित करतात.",
+            AppLanguage.HINDI to "संग्राहक और पुनर्चक्रणकर्ता दोनों व्यक्तिगत रूप से वजन और हस्तांतरण की पुष्टि करते हैं।",
+            AppLanguage.TELUGU to "సేకర్త మరియు రీసైక్లర్ ఇద్దరూ స్వయంగా బరువు మరియు బదిలీని ధృవీకరిస్తారు."
+        ),
+        "confirm_handover_payment" to mapOf(
+            AppLanguage.ENGLISH to "Confirm Handover & Record Payment",
+            AppLanguage.MARATHI to "हस्तांतरण निश्चित करा आणि देयकाची नोंद करा",
+            AppLanguage.HINDI to "हस्तांतरण की पुष्टि करें और भुगतान रिकॉर्ड करें",
+            AppLanguage.TELUGU to "బదిలీని నిర్ధారించండి మరియు చెల్లింపును రికార్డ్ చేయండి"
+        ),
+        "paid_cleared" to mapOf(
+            AppLanguage.ENGLISH to "Paid / Cleared",
+            AppLanguage.MARATHI to "पैसे दिले / पूर्ण झाले",
+            AppLanguage.HINDI to "भुगतान किया / चुकता",
+            AppLanguage.TELUGU to "చెల్లించబడింది / పూర్తయింది"
+        ),
+        "pending_dues" to mapOf(
+            AppLanguage.ENGLISH to "Pending Dues",
+            AppLanguage.MARATHI to "प्रलंबित थकबाकी",
+            AppLanguage.HINDI to "बकाया राशि",
+            AppLanguage.TELUGU to "పెండింగ్ బకాయిలు"
+        ),
+        "volume_handled" to mapOf(
+            AppLanguage.ENGLISH to "Volume Handled",
+            AppLanguage.MARATHI to "हाताळलेले प्रमाण",
+            AppLanguage.HINDI to "संभाली गई मात्रा",
+            AppLanguage.TELUGU to "హ్యాండిల్ చేసిన పరిమాణం"
+        ),
+        "search_records_placeholder" to mapOf(
+            AppLanguage.ENGLISH to "Search by category, Txn ID, or party...",
+            AppLanguage.MARATHI to "श्रेणी, व्यवहार आयडी किंवा पक्षाद्वारे शोधा...",
+            AppLanguage.HINDI to "श्रेणी, लेन-देन आईडी या पार्टी द्वारा खोजें...",
+            AppLanguage.TELUGU to "వర్గం, లావాదేవీ ఐడి లేదా పార్టీ ద్వారా శోధించండి..."
+        ),
+        "no_matching_records" to mapOf(
+            AppLanguage.ENGLISH to "No matching transaction records.",
+            AppLanguage.MARATHI to "कोणत्याही जुळणाऱ्या व्यवहार नोंदी नाहीत.",
+            AppLanguage.HINDI to "कोई मेल खाने वाला लेन-देन रिकॉर्ड नहीं।",
+            AppLanguage.TELUGU to "సరిపోలే లావాదేవీ రికార్డులు లేవు."
+        ),
+        "view_receipt" to mapOf(
+            AppLanguage.ENGLISH to "View Receipt",
+            AppLanguage.MARATHI to "पावती पहा",
+            AppLanguage.HINDI to "रसीद देखें",
+            AppLanguage.TELUGU to "రశీదు చూడండి"
+        ),
+        "receipt_title" to mapOf(
+            AppLanguage.ENGLISH to "E-Waste Handover Receipt",
+            AppLanguage.MARATHI to "ई-कचरा हस्तांतरण पावती",
+            AppLanguage.HINDI to "ई-कचरा हस्तांतरण रसीद",
+            AppLanguage.TELUGU to "ఇ-వ్యర్థాల బదిలీ రశీదు"
+        ),
+        "share_print_pdf" to mapOf(
+            AppLanguage.ENGLISH to "Share / Print PDF",
+            AppLanguage.MARATHI to "शेअर करा / PDF प्रिंट करा",
+            AppLanguage.HINDI to "शेयर करें / पीडीएफ प्रिंट करें",
+            AppLanguage.TELUGU to "భాగస్వామ్యం చేయండి / PDF ముద్రించండి"
+        ),
+        "close_btn" to mapOf(
+            AppLanguage.ENGLISH to "Close",
+            AppLanguage.MARATHI to "बंद करा",
+            AppLanguage.HINDI to "बंद करें",
+            AppLanguage.TELUGU to "మూసివేయి"
+        ),
+        "audio_speed" to mapOf(
+            AppLanguage.ENGLISH to "Audio Speed",
+            AppLanguage.MARATHI to "आवाज वेग",
+            AppLanguage.HINDI to "आवाज गति",
+            AppLanguage.TELUGU to "వాయిస్ వేగం"
+        ),
+        "audio_player_title" to mapOf(
+            AppLanguage.ENGLISH to "Audio Narrator",
+            AppLanguage.MARATHI to "ऑडिओ कथन",
+            AppLanguage.HINDI to "ऑडियो विवरण",
+            AppLanguage.TELUGU to "ఆడియో వివరణ"
+        ),
+        "voice_guidance_active" to mapOf(
+            AppLanguage.ENGLISH to "Voice Guidance Active",
+            AppLanguage.MARATHI to "आवाज मार्गदर्शन सुरू आहे",
+            AppLanguage.HINDI to "ध्वनि मार्गदर्शन सक्रिय है",
+            AppLanguage.TELUGU to "వాయిస్ గైడెన్స్ సక్రియంగా ఉంది"
+        ),
+        "now_speaking" to mapOf(
+            AppLanguage.ENGLISH to "Speaking",
+            AppLanguage.MARATHI to "वाचत आहे",
+            AppLanguage.HINDI to "बोल रहा है",
+            AppLanguage.TELUGU to "చెబుతోంది"
+        ),
+        "change_language" to mapOf(
+            AppLanguage.ENGLISH to "Change Language",
+            AppLanguage.MARATHI to "भाषा बदला",
+            AppLanguage.HINDI to "भाषा बदलें",
+            AppLanguage.TELUGU to "భాష మార్చండి"
+        ),
+        "voice_unavailable_title" to mapOf(
+            AppLanguage.ENGLISH to "Voice Audio Unavailable",
+            AppLanguage.MARATHI to "आवाज (TTS) डेटा उपलब्ध नाही",
+            AppLanguage.HINDI to "आवाज (TTS) डेटा उपलब्ध नहीं है",
+            AppLanguage.TELUGU to "వాయిస్ (TTS) డేటా అందుబాటులో లేదు"
+        ),
+        "marathi_region_label" to mapOf(
+            AppLanguage.ENGLISH to "Maharashtra",
+            AppLanguage.MARATHI to "महाराष्ट्र",
+            AppLanguage.HINDI to "महाराष्ट्र",
+            AppLanguage.TELUGU to "మహారాష్ట్ర"
+        ),
+        "camera_capture_title" to mapOf(
+            AppLanguage.ENGLISH to "Take Live E-Waste Photo",
+            AppLanguage.MARATHI to "ई-कचऱ्याचा थेट फोटो घ्या",
+            AppLanguage.HINDI to "ई-कचरे की लाइव फोटो लें",
+            AppLanguage.TELUGU to "ఇ-వ్యర్థాల ప్రత్యక్ష ఫోటో తీయండి"
+        ),
+        "camera_capture_desc" to mapOf(
+            AppLanguage.ENGLISH to "Capture clear photo of material for instant AI classification & weight check",
+            AppLanguage.MARATHI to "त्वरित AI वर्गीकरण आणि वजन तपासणीसाठी साहित्याचा स्पष्ट फोटो काढा",
+            AppLanguage.HINDI to "त्वरित एआई वर्गीकरण और वजन जांच के लिए सामग्री की स्पष्ट फोटो लें",
+            AppLanguage.TELUGU to "తక్షణ AI వర్గీకరణ మరియు బరువు తనిఖీ కోసం స్పష్టమైన ఫోటో తీయండి"
+        ),
+        "take_photo_btn" to mapOf(
+            AppLanguage.ENGLISH to "Open Camera",
+            AppLanguage.MARATHI to "कॅमेरा सुरू करा",
+            AppLanguage.HINDI to "कैमरा खोलें",
+            AppLanguage.TELUGU to "కెమెరా తెరవండి"
+        ),
+        "retake_photo_btn" to mapOf(
+            AppLanguage.ENGLISH to "Retake Live Photo",
+            AppLanguage.MARATHI to "पुन्हा फोटो काढा",
+            AppLanguage.HINDI to "दोबारा फोटो लें",
+            AppLanguage.TELUGU to "మళ్లీ ఫోటో తీయండి"
+        ),
+        "gallery_pick_btn" to mapOf(
+            AppLanguage.ENGLISH to "Upload Gallery",
+            AppLanguage.MARATHI to "गॅलरीतून निवडा",
+            AppLanguage.HINDI to "गैलरी से चुनें",
+            AppLanguage.TELUGU to "గ్యాలరీ నుండి"
+        ),
+        "camera_permission_required" to mapOf(
+            AppLanguage.ENGLISH to "Camera permission is required to capture photos of e-waste lots.",
+            AppLanguage.MARATHI to "ई-कचऱ्याचे फोटो काढण्यासाठी कॅमेरा परवानगी आवश्यक आहे.",
+            AppLanguage.HINDI to "ई-कचरा सामग्री की फोटो लेने के लिए कैमरा अनुमति आवश्यक है।",
+            AppLanguage.TELUGU to "ఇ-వ్యర్థాల ఫోటోలు తీయడానికి కెమెరా అనుమతి అవసరం."
+        ),
+        "photo_captured_success" to mapOf(
+            AppLanguage.ENGLISH to "Live photo captured successfully!",
+            AppLanguage.MARATHI to "थेट फोटो यशस्वीरित्या घेतला!",
+            AppLanguage.HINDI to "लाइव फोटो सफलतापूर्वक ले ली गई!",
+            AppLanguage.TELUGU to "లైవ్ ఫోటో విజయవంతంగా తీయబడింది!"
+        ),
+        "photo_attached" to mapOf(
+            AppLanguage.ENGLISH to "Photo Attached",
+            AppLanguage.MARATHI to "फोटो जोडला आहे",
+            AppLanguage.HINDI to "फोटो संलग्न है",
+            AppLanguage.TELUGU to "ఫోటో జోడించబడింది"
         )
     )
 }

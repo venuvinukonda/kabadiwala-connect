@@ -10,6 +10,7 @@ import com.example.service.ai.*
 import com.example.service.audio.AudioHelpManager
 import com.example.service.localization.AppLanguage
 import com.example.service.localization.LocalizationManager
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -39,6 +40,16 @@ data class LotCreationState(
     val generatedLotId: String = ""
 )
 
+data class RouteOptimizationResult(
+    val stops: List<PickupRequestEntity> = emptyList(),
+    val polylinePoints: List<Pair<Double, Double>> = emptyList(),
+    val totalDistanceKm: Double = 0.0,
+    val estimatedDurationMinutes: Int = 0,
+    val totalWeightKg: Double = 0.0,
+    val totalEstimatedValue: Double = 0.0
+)
+
+@OptIn(ExperimentalCoroutinesApi::class)
 class KabadiwalaViewModel(application: Application) : AndroidViewModel(application) {
 
     private val database = KabadiwalaDatabase.getDatabase(application)
@@ -62,6 +73,8 @@ class KabadiwalaViewModel(application: Application) : AndroidViewModel(applicati
     val isSpeaking = audioManager.isSpeaking
     val isPaused = audioManager.isPaused
     val speechRate = audioManager.speechRate
+    val currentSpokenText = audioManager.currentSpokenText
+    val voiceUnavailableMessage = audioManager.voiceUnavailableMessage
 
     // Lists
     val allLots = repository.getAllLotsFlow().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -85,6 +98,22 @@ class KabadiwalaViewModel(application: Application) : AndroidViewModel(applicati
             pickups.filter { it.collectorId == user.id }
         } else emptyList()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val activeNearbyPickups: StateFlow<List<PickupRequestEntity>> = allPickups.map { pickups ->
+        pickups.filter {
+            it.status == PickupStatus.ACCEPTED.name ||
+            it.status == PickupStatus.PICKUP_SCHEDULED.name ||
+            it.status == PickupStatus.REQUESTED.name
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Collector base / current GPS coordinates (defaults to Dharavi, Mumbai)
+    private val _collectorLocation = MutableStateFlow<Pair<Double, Double>>(Pair(19.0434, 72.8562))
+    val collectorLocation: StateFlow<Pair<Double, Double>> = _collectorLocation.asStateFlow()
+
+    // Route Optimization Result
+    private val _optimizedRoute = MutableStateFlow<RouteOptimizationResult?>(null)
+    val optimizedRoute: StateFlow<RouteOptimizationResult?> = _optimizedRoute.asStateFlow()
 
     val recyclerPickups: StateFlow<List<PickupRequestEntity>> = combine(allPickups, currentUser) { pickups, user ->
         if (user != null && user.role == UserRole.RECYCLER.name) {
@@ -135,14 +164,29 @@ class KabadiwalaViewModel(application: Application) : AndroidViewModel(applicati
         _userMessage.value = null
     }
 
-    fun setLanguage(lang: AppLanguage) {
+    fun setLanguage(lang: AppLanguage, speakGreeting: Boolean = true) {
         audioManager.stop()
         LocalizationManager.setLanguage(lang, getApplication())
         audioManager.setLocaleForLanguage(lang)
+        if (speakGreeting) {
+            audioManager.speakLanguageChangedGreeting(lang)
+        }
     }
 
     fun speak(text: String) {
         audioManager.speak(text)
+    }
+
+    fun speakFeedback(text: String) {
+        audioManager.speakFeedback(text)
+    }
+
+    fun retryAudio() {
+        audioManager.retry()
+    }
+
+    fun dismissVoiceWarning() {
+        audioManager.clearVoiceWarning()
     }
 
     fun pauseAudio() {
@@ -618,5 +662,82 @@ class KabadiwalaViewModel(application: Application) : AndroidViewModel(applicati
             repository.updateRecyclerSettings(user.id, ratesJson, categories, minQty, pickupAvail, radius)
             showMessage("Rates and pickup settings updated.")
         }
+    }
+
+    fun updateCollectorLocation(lat: Double, lng: Double) {
+        _collectorLocation.value = Pair(lat, lng)
+    }
+
+    fun calculateDistanceKm(targetLat: Double, targetLng: Double): Double {
+        val (cLat, cLng) = _collectorLocation.value
+        val results = FloatArray(1)
+        return try {
+            android.location.Location.distanceBetween(cLat, cLng, targetLat, targetLng, results)
+            Math.round((results[0] / 1000.0) * 10.0) / 10.0
+        } catch (e: Exception) {
+            0.0
+        }
+    }
+
+    fun optimizeRouteForPickups(pickupsToOptimize: List<PickupRequestEntity>): RouteOptimizationResult {
+        val (startLat, startLng) = _collectorLocation.value
+        if (pickupsToOptimize.isEmpty()) {
+            val empty = RouteOptimizationResult()
+            _optimizedRoute.value = empty
+            return empty
+        }
+
+        val unvisited = pickupsToOptimize.toMutableList()
+        val orderedStops = mutableListOf<PickupRequestEntity>()
+        var curLat = startLat
+        var curLng = startLng
+        var totalDistKm = 0.0
+
+        val polyline = mutableListOf<Pair<Double, Double>>()
+        polyline.add(Pair(startLat, startLng))
+
+        while (unvisited.isNotEmpty()) {
+            var bestIdx = 0
+            var minDist = Double.MAX_VALUE
+            for (i in unvisited.indices) {
+                val results = FloatArray(1)
+                try {
+                    android.location.Location.distanceBetween(curLat, curLng, unvisited[i].gpsLat, unvisited[i].gpsLng, results)
+                    val dist = (results[0] / 1000.0).toDouble()
+                    if (dist < minDist) {
+                        minDist = dist
+                        bestIdx = i
+                    }
+                } catch (e: Exception) {
+                    // Ignore calculation error
+                }
+            }
+            val stop = unvisited.removeAt(bestIdx)
+            orderedStops.add(stop)
+            totalDistKm += minDist
+            curLat = stop.gpsLat
+            curLng = stop.gpsLng
+            polyline.add(Pair(curLat, curLng))
+        }
+
+        val roundedDist = Math.round(totalDistKm * 10.0) / 10.0
+        val estDuration = (roundedDist * 2.7).toInt() + (orderedStops.size * 12)
+        val totalWeight = orderedStops.sumOf { it.weightKg }
+        val totalVal = orderedStops.sumOf { it.totalValue }
+
+        val result = RouteOptimizationResult(
+            stops = orderedStops,
+            polylinePoints = polyline,
+            totalDistanceKm = roundedDist,
+            estimatedDurationMinutes = estDuration,
+            totalWeightKg = totalWeight,
+            totalEstimatedValue = totalVal
+        )
+        _optimizedRoute.value = result
+        return result
+    }
+
+    fun clearOptimizedRoute() {
+        _optimizedRoute.value = null
     }
 }

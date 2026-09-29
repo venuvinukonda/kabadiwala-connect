@@ -1,5 +1,18 @@
 package com.example.ui.screens.collector
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import coil.compose.AsyncImage
+import java.io.File
+import java.io.FileOutputStream
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -45,6 +58,7 @@ fun CollectorDashboardScreen(
     onCollectClick: () -> Unit,
     onMyLotsClick: () -> Unit,
     onPickupsClick: () -> Unit,
+    onPickupsMapClick: () -> Unit = {},
     onEarningsClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onPriceHistoryClick: () -> Unit,
@@ -209,6 +223,64 @@ fun CollectorDashboardScreen(
                             imageVector = Icons.Default.ArrowForward,
                             contentDescription = "Go",
                             tint = Color.White
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Hero Action 2: MAP ROUTING & NEARBY PICKUPS
+                Card(
+                    onClick = onPickupsMapClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(86.dp)
+                        .testTag("nearby_pickups_map_tile"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 18.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(52.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.Map,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(30.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Column {
+                                Text(
+                                    text = LocalizationManager.getString("pickup_map_title"),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 17.sp,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Text(
+                                    text = LocalizationManager.getString("route_efficiency") + " & Multi-Stop Tour",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
+                                )
+                            }
+                        }
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = "Open Map",
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }
                 }
@@ -388,6 +460,64 @@ fun CollectEWasteWizardScreen(
     val state by viewModel.lotCreationState.collectAsState()
     val currentLang by viewModel.currentLanguage.collectAsState()
     val isSpeaking by viewModel.isSpeaking.collectAsState()
+    val context = LocalContext.current
+
+    val takePhotoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            try {
+                val file = File(context.cacheDir, "lot_captured_${System.currentTimeMillis()}.jpg")
+                FileOutputStream(file).use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 92, out)
+                }
+                val photoUri = Uri.fromFile(file).toString()
+                viewModel.updateLotInput(
+                    weight = state.weightInput,
+                    desc = state.description.ifBlank { "E-Waste Scrap Material" },
+                    loc = state.location,
+                    photo = photoUri
+                )
+                viewModel.showMessage(LocalizationManager.getString("photo_captured_success"))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                viewModel.showMessage("Failed to save photo: ${e.message}")
+            }
+        }
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            takePhotoLauncher.launch(null)
+        } else {
+            viewModel.showMessage(LocalizationManager.getString("camera_permission_required"))
+        }
+    }
+
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.updateLotInput(
+                weight = state.weightInput,
+                desc = state.description.ifBlank { "E-Waste Scrap Material" },
+                loc = state.location,
+                photo = uri.toString()
+            )
+            viewModel.showMessage(LocalizationManager.getString("photo_captured_success"))
+        }
+    }
+
+    fun launchLiveCamera() {
+        val permissionStatus = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+        if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
+            takePhotoLauncher.launch(null)
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
 
     val availableCategories = listOf(
         "Laptops", "Mobile Phones", "Computers", "Circuit Boards",
@@ -405,11 +535,17 @@ fun CollectEWasteWizardScreen(
             )
         }
     ) { padding ->
+        val scrollState = rememberScrollState()
+        LaunchedEffect(state.step) {
+            scrollState.scrollTo(0)
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+                .verticalScrollbar(scrollState)
+                .verticalScroll(scrollState)
                 .padding(16.dp)
         ) {
             // Step Progress Bar
@@ -450,40 +586,168 @@ fun CollectEWasteWizardScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Photo Area
+                    // Photo Area with Live Camera Access
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(140.dp)
+                            .height(200.dp)
                             .testTag("lot_photo_card"),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    imageVector = Icons.Default.AddAPhoto,
-                                    contentDescription = LocalizationManager.getString("wizard_capture_photo"),
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(36.dp)
+                        if (state.photoUri.isNotBlank()) {
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                AsyncImage(
+                                    model = state.photoUri,
+                                    contentDescription = "Captured E-Waste Photo",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
                                 )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Button(
-                                    onClick = {
-                                        viewModel.updateLotInput(
-                                            weight = state.weightInput,
-                                            desc = state.description.ifBlank { "Laptops & Electronic Boards" },
-                                            loc = state.location,
-                                            photo = "content://media/photo_${System.currentTimeMillis()}"
-                                        )
-                                        viewModel.showMessage(LocalizationManager.getString("photo_captured"))
-                                    },
-                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                                // Top status badge
+                                Surface(
+                                    color = DeepGreenPrimary.copy(alpha = 0.9f),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier
+                                        .align(Alignment.TopStart)
+                                        .padding(10.dp)
                                 ) {
-                                    Text(LocalizationManager.getString("wizard_capture_photo"))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = LocalizationManager.getString("photo_attached"),
+                                            color = Color.White,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+
+                                // Bottom Actions
+                                Surface(
+                                    color = Color.Black.copy(alpha = 0.6f),
+                                    shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .align(Alignment.BottomCenter)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Button(
+                                            onClick = { launchLiveCamera() },
+                                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                            shape = RoundedCornerShape(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                            modifier = Modifier.testTag("retake_photo_camera_button")
+                                        ) {
+                                            Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(LocalizationManager.getString("retake_photo_btn"), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+
+                                        OutlinedButton(
+                                            onClick = {
+                                                pickImageLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                            },
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.7f)),
+                                            shape = RoundedCornerShape(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                                            modifier = Modifier.testTag("pick_gallery_photo_button")
+                                        ) {
+                                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(LocalizationManager.getString("gallery_pick_btn"), fontSize = 12.sp)
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        modifier = Modifier.size(52.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Default.CameraAlt,
+                                                contentDescription = LocalizationManager.getString("take_photo_btn"),
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Text(
+                                        text = LocalizationManager.getString("camera_capture_title"),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = LocalizationManager.getString("camera_capture_desc"),
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        modifier = Modifier.padding(horizontal = 8.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Button(
+                                            onClick = { launchLiveCamera() },
+                                            shape = RoundedCornerShape(10.dp),
+                                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                                            modifier = Modifier.testTag("take_photo_camera_button")
+                                        ) {
+                                            Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(LocalizationManager.getString("take_photo_btn"), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                        }
+
+                                        OutlinedButton(
+                                            onClick = {
+                                                pickImageLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                            },
+                                            shape = RoundedCornerShape(10.dp),
+                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                                            modifier = Modifier.testTag("pick_gallery_button")
+                                        ) {
+                                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(LocalizationManager.getString("gallery_pick_btn"), fontSize = 12.sp)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -607,17 +871,36 @@ fun CollectEWasteWizardScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            Text(
-                                text = "${LocalizationManager.getString("category")}: ${state.selectedCategory}",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Text(
-                                text = "${LocalizationManager.getString("subcategory")}: ${state.selectedSubcategory}",
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "${LocalizationManager.getString("category")}: ${state.selectedCategory}",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Text(
+                                        text = "${LocalizationManager.getString("subcategory")}: ${state.selectedSubcategory}",
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    )
+                                }
+                                if (state.photoUri.isNotBlank()) {
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    AsyncImage(
+                                        model = state.photoUri,
+                                        contentDescription = "Lot Image Preview",
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .clip(RoundedCornerShape(10.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -1065,6 +1348,7 @@ fun MyLotsScreen(
 fun CollectorPickupsScreen(
     viewModel: KabadiwalaViewModel,
     onStartHandover: (Long) -> Unit,
+    onViewMapClick: () -> Unit = {},
     onBack: () -> Unit,
     onLanguageClick: () -> Unit
 ) {
@@ -1079,57 +1363,130 @@ fun CollectorPickupsScreen(
                 onLanguageClick = onLanguageClick,
                 currentLang = currentLang
             )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = onViewMapClick,
+                icon = { Icon(Icons.Default.Map, contentDescription = null) },
+                text = { Text(LocalizationManager.getString("view_map")) },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White,
+                modifier = Modifier.testTag("collector_pickups_map_fab")
+            )
         }
     ) { padding ->
-        if (pickups.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.LocalShipping, contentDescription = null, modifier = Modifier.size(54.dp), tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(LocalizationManager.getString("no_pickups_found"), fontWeight = FontWeight.Bold)
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // View Switcher Bar (List View vs Map View)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(pickups) { pickup ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth().testTag("pickup_item_${pickup.id}"),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = pickup.materialCategory,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
-                                )
-                                StatusChip(status = pickup.status)
-                            }
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text("${LocalizationManager.getString("role_recycler")}: ${pickup.recyclerName}", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
-                            Text("${LocalizationManager.getString("weight_kg")}: ${pickup.weightKg} kg  •  ${LocalizationManager.getString("agreed_rate")}: ₹${pickup.agreedPricePerKg.toInt()}/kg", fontSize = 13.sp)
-                            Text("${LocalizationManager.getString("total_value")}: ₹${pickup.totalValue.toInt()}", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Text("${LocalizationManager.getString("location")}: ${pickup.pickupAddress}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                FilterChip(
+                    selected = true,
+                    onClick = { /* on list */ },
+                    label = { Text(LocalizationManager.getString("view_list")) },
+                    leadingIcon = { Icon(Icons.Default.List, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                    modifier = Modifier.weight(1f)
+                )
+                FilterChip(
+                    selected = false,
+                    onClick = onViewMapClick,
+                    label = { Text(LocalizationManager.getString("view_map")) },
+                    leadingIcon = { Icon(Icons.Default.Map, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
-                            if (pickup.status == PickupStatus.ACCEPTED.name || pickup.status == PickupStatus.PICKUP_SCHEDULED.name) {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Button(
-                                    onClick = { onStartHandover(pickup.id) },
-                                    modifier = Modifier.fillMaxWidth().height(42.dp).testTag("start_handover_button_${pickup.id}"),
-                                    shape = RoundedCornerShape(10.dp)
+            if (pickups.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.LocalShipping, contentDescription = null, modifier = Modifier.size(54.dp), tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(LocalizationManager.getString("no_pickups_found"), fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Button(
+                            onClick = onViewMapClick,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.Map, contentDescription = null)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(LocalizationManager.getString("pickup_map_title"))
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(pickups) { pickup ->
+                        val distance = viewModel.calculateDistanceKm(pickup.gpsLat, pickup.gpsLng)
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("pickup_item_${pickup.id}"),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Default.QrCodeScanner, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(LocalizationManager.getString("start_handover"))
+                                    Text(
+                                        text = pickup.materialCategory,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
+                                    StatusChip(status = pickup.status)
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("${LocalizationManager.getString("role_recycler")}: ${pickup.recyclerName}", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+                                Text("${LocalizationManager.getString("weight_kg")}: ${pickup.weightKg} kg  •  ${LocalizationManager.getString("agreed_rate")}: ₹${pickup.agreedPricePerKg.toInt()}/kg", fontSize = 13.sp)
+                                Text("${LocalizationManager.getString("total_value")}: ₹${pickup.totalValue.toInt()}", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Text("${LocalizationManager.getString("location")}: ${pickup.pickupAddress} (${distance} km)", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    OutlinedButton(
+                                        onClick = onViewMapClick,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(42.dp),
+                                        shape = RoundedCornerShape(10.dp)
+                                    ) {
+                                        Icon(Icons.Default.Place, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(LocalizationManager.getString("view_map"), fontSize = 12.sp)
+                                    }
+
+                                    if (pickup.status == PickupStatus.ACCEPTED.name || pickup.status == PickupStatus.PICKUP_SCHEDULED.name) {
+                                        Button(
+                                            onClick = { onStartHandover(pickup.id) },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(42.dp)
+                                                .testTag("start_handover_button_${pickup.id}"),
+                                            shape = RoundedCornerShape(10.dp)
+                                        ) {
+                                            Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(LocalizationManager.getString("start_handover"), fontSize = 12.sp)
+                                        }
+                                    }
                                 }
                             }
                         }

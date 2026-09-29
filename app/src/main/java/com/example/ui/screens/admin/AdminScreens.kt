@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.*
+import com.example.service.localization.LocalizationManager
 import com.example.ui.components.*
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.KabadiwalaViewModel
@@ -48,7 +49,7 @@ fun AdminDashboardScreen(
     Scaffold(
         topBar = {
             KabadiwalaTopBar(
-                title = "Admin Oversight Console",
+                title = LocalizationManager.getString("admin_console"),
                 onLanguageClick = onLanguageClick,
                 currentLang = currentLang,
                 onLogoutClick = onLogoutClick
@@ -63,12 +64,12 @@ fun AdminDashboardScreen(
                 .padding(16.dp)
         ) {
             Text(
-                text = "System Operations & Compliance",
+                text = LocalizationManager.getString("admin_compliance_title"),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Manage CPCB/SPCB authorizations, collectors, and resolve disputes",
+                text = LocalizationManager.getString("admin_compliance_desc"),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -91,13 +92,13 @@ fun AdminDashboardScreen(
                         Spacer(modifier = Modifier.width(14.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "$pendingUsersCount Registrations Pending Approval",
+                                text = "$pendingUsersCount " + LocalizationManager.getString("pending_approvals"),
                                 fontWeight = FontWeight.Bold,
                                 color = WarmOrangeOnContainer,
                                 fontSize = 15.sp
                             )
                             Text(
-                                text = "Collectors & Recyclers waiting for license verification",
+                                text = LocalizationManager.getString("pending_verification_desc"),
                                 fontSize = 12.sp,
                                 color = WarmOrangeOnContainer.copy(alpha = 0.8f)
                             )
@@ -110,28 +111,28 @@ fun AdminDashboardScreen(
 
             // Quick Stats Grid
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                AdminStatCard("Collected Scrap", "${totalWeightCollected.toInt()} kg", Icons.Default.Scale, DeepGreenContainer, DeepGreenOnContainer, Modifier.weight(1f))
-                AdminStatCard("Total Value", "₹${totalValue.toInt()}", Icons.Default.CurrencyRupee, WarmOrangeContainer, WarmOrangeOnContainer, Modifier.weight(1f))
+                AdminStatCard(LocalizationManager.getString("total_collected"), "${totalWeightCollected.toInt()} kg", Icons.Default.Scale, DeepGreenContainer, DeepGreenOnContainer, Modifier.weight(1f))
+                AdminStatCard(LocalizationManager.getString("platform_value"), "₹${totalValue.toInt()}", Icons.Default.CurrencyRupee, WarmOrangeContainer, WarmOrangeOnContainer, Modifier.weight(1f))
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                AdminStatCard("Active Users", "${allUsers.size}", Icons.Default.People, TechBlueContainer, MaterialTheme.colorScheme.onTertiaryContainer, Modifier.weight(1f))
-                AdminStatCard("Disputes", "$disputedCount", Icons.Default.Gavel, if (disputedCount > 0) DangerRed.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant, if (disputedCount > 0) DangerRed else MaterialTheme.colorScheme.onSurfaceVariant, Modifier.weight(1f))
+                AdminStatCard(LocalizationManager.getString("role_collector"), "${allUsers.count { it.role == "COLLECTOR" }}", Icons.Default.People, TechBlueContainer, MaterialTheme.colorScheme.onTertiaryContainer, Modifier.weight(1f))
+                AdminStatCard(LocalizationManager.getString("role_recycler"), "${allUsers.count { it.role == "RECYCLER" }}", Icons.Default.PrecisionManufacturing, DeepGreenContainer, DeepGreenOnContainer, Modifier.weight(1f))
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Text("Admin Controls", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(LocalizationManager.getString("quick_actions"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(12.dp))
 
             AdminActionCard(
-                title = "Registration Approvals",
-                subtitle = "Verify collector applications and recycler CPCB certificates",
+                title = LocalizationManager.getString("reg_approvals_title"),
+                subtitle = LocalizationManager.getString("pending_verification_desc"),
                 icon = Icons.Default.HowToReg,
-                badge = if (pendingUsersCount > 0) "$pendingUsersCount Pending" else null,
+                badge = if (pendingUsersCount > 0) "$pendingUsersCount ${LocalizationManager.getString("status_pending")}" else null,
                 onClick = onUserApprovalsClick,
                 testTag = "admin_user_approvals_nav"
             )
@@ -139,10 +140,10 @@ fun AdminDashboardScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             AdminActionCard(
-                title = "All Transactions & Payments",
-                subtitle = "Inspect digital handover receipts, investigate disputes & record payments",
+                title = LocalizationManager.getString("transaction_history"),
+                subtitle = LocalizationManager.getString("digital_handover"),
                 icon = Icons.Default.ReceiptLong,
-                badge = if (disputedCount > 0) "$disputedCount Disputed" else null,
+                badge = if (disputedCount > 0) "$disputedCount" else null,
                 onClick = onTransactionsClick,
                 testTag = "admin_transactions_nav"
             )
@@ -150,8 +151,8 @@ fun AdminDashboardScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             AdminActionCard(
-                title = "Analytics & Audit Logs",
-                subtitle = "Category distribution, collection trends & compliance logs",
+                title = LocalizationManager.getString("analytics_logs_title"),
+                subtitle = LocalizationManager.getString("analytics_logs_desc"),
                 icon = Icons.Default.BarChart,
                 badge = null,
                 onClick = onAnalyticsClick,
@@ -262,7 +263,7 @@ fun AdminUserApprovalsScreen(
     Scaffold(
         topBar = {
             KabadiwalaTopBar(
-                title = "Registration Approvals",
+                title = LocalizationManager.getString("reg_approvals_title"),
                 onBack = onBack,
                 onLanguageClick = onLanguageClick,
                 currentLang = currentLang
@@ -274,12 +275,12 @@ fun AdminUserApprovalsScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Collectors (${collectors.size})") }
+                    text = { Text("${LocalizationManager.getString("role_collector")} (${collectors.size})") }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("Recyclers (${recyclers.size})") }
+                    text = { Text("${LocalizationManager.getString("role_recycler")} (${recyclers.size})") }
                 )
             }
 
@@ -307,10 +308,10 @@ fun AdminUserApprovalsScreen(
                                 }
 
                                 Spacer(modifier = Modifier.height(6.dp))
-                                Text("Phone: ${col.phone}  •  City: ${col.city}", fontSize = 13.sp)
-                                Text("Govt ID: ${col.govtIdNumber}", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-                                Text("Address: ${col.address}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text("Preferred Area: ${col.preferredArea}", fontSize = 12.sp)
+                                Text("${LocalizationManager.getString("username_or_phone")}: ${col.phone}  •  ${LocalizationManager.getString("location")}: ${col.city}", fontSize = 13.sp)
+                                Text("ID: ${col.govtIdNumber}", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                                Text("${LocalizationManager.getString("location")}: ${col.address}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("${LocalizationManager.getString("preferred_collection_area")}: ${col.preferredArea}", fontSize = 12.sp)
 
                                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -319,13 +320,13 @@ fun AdminUserApprovalsScreen(
                                         onClick = { viewModel.approveCollector(col.userId) },
                                         modifier = Modifier.weight(1f).height(40.dp).testTag("approve_collector_${col.userId}")
                                     ) {
-                                        Text("Approve")
+                                        Text(LocalizationManager.getString("approve"))
                                     }
                                     OutlinedButton(
                                         onClick = { viewModel.rejectCollector(col.userId) },
                                         modifier = Modifier.weight(1f).height(40.dp)
                                     ) {
-                                        Text("Reject")
+                                        Text(LocalizationManager.getString("reject"))
                                     }
                                 }
                             }
@@ -350,10 +351,10 @@ fun AdminUserApprovalsScreen(
                                 }
 
                                 Spacer(modifier = Modifier.height(6.dp))
-                                Text("Cert No: ${rec.certNumber}", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
-                                Text("Authority: ${rec.certAuthority}  •  Valid till ${rec.certExpiryDate}", fontSize = 12.sp)
-                                Text("Authorized Contact: ${rec.authorizedPerson} (${rec.phone})", fontSize = 12.sp)
-                                Text("Categories: ${rec.acceptedCategoriesCsv}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("${LocalizationManager.getString("govt_cert_upload")}: ${rec.certNumber}", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
+                                Text("${rec.certAuthority} • ${rec.certExpiryDate}", fontSize = 12.sp)
+                                Text("${rec.authorizedPerson} (${rec.phone})", fontSize = 12.sp)
+                                Text("${rec.acceptedCategoriesCsv}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -362,13 +363,13 @@ fun AdminUserApprovalsScreen(
                                         onClick = { viewModel.approveRecycler(rec.userId) },
                                         modifier = Modifier.weight(1f).height(40.dp).testTag("approve_recycler_${rec.userId}")
                                     ) {
-                                        Text("Verify & Approve")
+                                        Text(LocalizationManager.getString("approve"))
                                     }
                                     OutlinedButton(
                                         onClick = { viewModel.rejectRecycler(rec.userId) },
                                         modifier = Modifier.weight(1f).height(40.dp)
                                     ) {
-                                        Text("Reject")
+                                        Text(LocalizationManager.getString("reject"))
                                     }
                                 }
                             }

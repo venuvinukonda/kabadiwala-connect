@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.model.UserRole
 import com.example.service.localization.LocalizationManager
-import com.example.ui.components.LanguageDialog
+import com.example.ui.components.*
 import com.example.ui.navigation.AppScreen
 import com.example.ui.screens.admin.*
 import com.example.ui.screens.auth.*
@@ -81,16 +83,19 @@ fun NavigationHost(
     val currentScreen = screenStack.lastOrNull() ?: AppScreen.RoleSelection
 
     fun navigateTo(screen: AppScreen) {
+        viewModel.stopAudio()
         screenStack = screenStack + screen
     }
 
     fun navigateBack() {
+        viewModel.stopAudio()
         if (screenStack.size > 1) {
             screenStack = screenStack.dropLast(1)
         }
     }
 
     fun navigateRoot(screen: AppScreen) {
+        viewModel.stopAudio()
         screenStack = listOf(screen)
     }
 
@@ -199,6 +204,7 @@ fun NavigationHost(
                         onCollectClick = { navigateTo(AppScreen.CollectEWasteWizard) },
                         onMyLotsClick = { navigateTo(AppScreen.MyLotsList) },
                         onPickupsClick = { navigateTo(AppScreen.CollectorPickups) },
+                        onPickupsMapClick = { navigateTo(AppScreen.CollectorPickupsMap) },
                         onEarningsClick = { navigateTo(AppScreen.CollectorEarnings) },
                         onHistoryClick = { navigateTo(AppScreen.TransactionHistory) },
                         onPriceHistoryClick = { navigateTo(AppScreen.PriceHistory) },
@@ -237,7 +243,19 @@ fun NavigationHost(
                         onStartHandover = { pickupId ->
                             navigateTo(AppScreen.HandoverScreen(pickupId))
                         },
+                        onViewMapClick = { navigateTo(AppScreen.CollectorPickupsMap) },
                         onBack = { navigateBack() },
+                        onLanguageClick = { showLanguageDialog = true }
+                    )
+                }
+
+                is AppScreen.CollectorPickupsMap -> {
+                    CollectorMapScreen(
+                        viewModel = viewModel,
+                        onBack = { navigateBack() },
+                        onStartHandover = { pickupId ->
+                            navigateTo(AppScreen.HandoverScreen(pickupId))
+                        },
                         onLanguageClick = { showLanguageDialog = true }
                     )
                 }
@@ -372,14 +390,53 @@ fun NavigationHost(
                 }
             }
 
+            val isSpeaking by viewModel.isSpeaking.collectAsState()
+            val isPaused by viewModel.isPaused.collectAsState()
+            val currentSpokenText by viewModel.currentSpokenText.collectAsState()
+            val speechRate by viewModel.speechRate.collectAsState()
+            val voiceWarning by viewModel.voiceUnavailableMessage.collectAsState()
+
+            val isLoginOrAuthScreen = currentScreen is AppScreen.RoleSelection ||
+                    currentScreen is AppScreen.Login ||
+                    currentScreen is AppScreen.CollectorRegister ||
+                    currentScreen is AppScreen.RecyclerRegister
+
             if (showLanguageDialog) {
                 LanguageDialog(
                     currentLang = currentLang,
                     onSelectLanguage = { lang ->
-                        viewModel.setLanguage(lang)
+                        viewModel.setLanguage(lang, speakGreeting = !isLoginOrAuthScreen)
                         showLanguageDialog = false
                     },
                     onDismiss = { showLanguageDialog = false }
+                )
+            }
+
+            if ((isSpeaking || isPaused) && !currentSpokenText.isNullOrBlank() && !isLoginOrAuthScreen) {
+                FloatingAudioPlayerBar(
+                    currentText = currentSpokenText ?: "",
+                    isSpeaking = isSpeaking,
+                    isPaused = isPaused,
+                    speechRate = speechRate,
+                    currentLang = currentLang,
+                    onPlayPause = {
+                        if (isSpeaking) viewModel.pauseAudio() else viewModel.resumeAudio()
+                    },
+                    onReplay = { viewModel.replayAudio() },
+                    onStop = { viewModel.stopAudio() },
+                    onSpeedChange = { viewModel.setSpeechRate(it) },
+                    onLanguageClick = { showLanguageDialog = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 16.dp, vertical = 16.dp)
+                )
+            }
+
+            if (voiceWarning != null) {
+                VoiceUnavailableDialog(
+                    message = voiceWarning!!,
+                    onRetry = { viewModel.retryAudio() },
+                    onDismiss = { viewModel.dismissVoiceWarning() }
                 )
             }
         }
